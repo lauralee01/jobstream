@@ -4,16 +4,13 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
+	apphttp "jobstream/internal/http"
 )
 
 func main (){
-	mux := http.NewServeMux()
-
-	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request){
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprint(w, `{"status":"ok"}`)
-	})
+	router := apphttp.NewRouter()
 
 	fmt.Println("API running on :8080")
-	log.Fatal(http.ListenAndServe(":8080", mux))
+	log.Fatal(http.ListenAndServe(":8080", router))
 }
