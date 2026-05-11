@@ -12,6 +12,7 @@
 
 # OS files
 .DS_Store
+/docs
 
 # Env files
 .env

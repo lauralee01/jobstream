@@ -8,7 +8,7 @@ import (
 	apphttp "jobstream/internal/http"
 )
 
-func main (){
+func main() {
 	router := apphttp.NewRouter()
 
 	fmt.Println("API running on :8080")
