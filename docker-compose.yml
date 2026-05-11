@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: jobstream_db
+    restart: always
+    environment:
+      POSTGRES_USER: jobstream
+      POSTGRES_PASSWORD: jobstream
+      POSTGRES_DB: jobstream_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
