@@ -1,21 +1,23 @@
 package fetcher
 
+import (
+	"jobstream/internal/domain"
+	"time"
+)
+
 // Fetcher is an interface that represents a job provider (e.g. LinkedIn, Indeed).
 // We use an interface here so that the JobService can fetch jobs from MANY sources
-// without knowing the details of how each source works.
 type Fetcher interface {
 	// Name returns the name of the source (e.g. "LinkedIn")
-	Name() string
-
 	// Fetch returns a list of jobs from the source.
-	// TODO: Define the method signature
-	// Fetch() ([]domain.Job, error)
+	Name() string
+	Fetch() ([]domain.Job, error)
 }
 
-// TODO: Create a MockFetcher that implements this interface.
-// A MockFetcher is useful for testing without making real network requests.
-// type MockFetcher struct {}
-// func (m *MockFetcher) Name() string { return "Mock" }
-// func (m *MockFetcher) Fetch() ([]domain.Job, error) {
-//    return []domain.Job{{Title: "Software Engineer Mock"}}, nil
-// }
+type MockFetcher struct{}
+
+func (m *MockFetcher) Name() string { return "Mock" }
+
+func (m *MockFetcher) Fetch() ([]domain.Job, error) {
+	return []domain.Job{{ID: "1", SourceID: "1", Platform: "Mock", Title: "Software Engineer Mock", Company: "Mock Company", Location: "Mock Location", Description: "Mock Description", URL: "Mock URL", Salary: "Mock Salary", PostedAt: time.Now(), CreatedAt: time.Now()}}, nil
+}
