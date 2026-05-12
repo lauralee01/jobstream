@@ -1,25 +1,61 @@
 package main
 
 import (
-	"fmt"
+	"context"
 	"log"
 	"net/http"
+	"os"
+	"time"
 
 	"jobstream/internal/db"
 	"jobstream/internal/fetcher"
 	"jobstream/internal/jobs"
 
 	apphttp "jobstream/internal/http"
+
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	// 1. Initialize Database
-	pool, err := db.NewPostgresJobRepository()
-	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+	if err := godotenv.Load(); err != nil {
+		log.Printf("godotenv: %v (using environment variables only)", err)
 	}
-	router := apphttp.NewRouter()
+	// Load database URL from environment variables
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		log.Fatal("DATABASE_URL is not set")
+	}
 
-	fmt.Println("API running on :8080")
-	log.Fatal(http.ListenAndServe(":8080", router))
+	// 2. Create Postgres connection pool
+	pool, err := pgxpool.New(context.Background(), databaseURL)
+	if err != nil {
+		log.Fatalf("Unable to connect to database: %v", err)
+	}
+	defer pool.Close()
+
+	// 3. Initialize Repository
+	repo := db.NewPostgresJobRepository(pool)
+
+	// 4. Register fetchers
+	fetchers := []fetcher.Fetcher{
+		&fetcher.MockFetcher{},
+	}
+
+	// 5. Initialize Job Service
+	jobService := jobs.NewJobService(repo, fetchers)
+
+	// 6. Initialize HTTP Router with job service
+	router := apphttp.NewRouter(jobService)
+
+	// 7. Start server
+	server := &http.Server{
+		Addr:         ":8080",
+		Handler:      router,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
+
+	log.Println("🚀 Server running on http://localhost:8080")
+	log.Fatal(server.ListenAndServe())
 }

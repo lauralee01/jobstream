@@ -1,7 +1,7 @@
 package http
 
 import (
-	"fmt"
+	"encoding/json"
 	"jobstream/internal/jobs"
 	"net/http"
 )
@@ -11,13 +11,15 @@ func NewRouter(jobService *jobs.JobService) *http.ServeMux {
 
 	// Health check
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprint(w, `{"status":"ok"}`)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{
+			"status": "ok",
+		})
 	})
 
 	// Job routes
 	jobHandler := NewJobHandler(jobService)
-	mux.HandleFunc("/jobs/sync", jobHandler.SyncJobs)
+	mux.HandleFunc("/api/v1/jobs/sync", jobHandler.SyncJobs)
 
 	return mux
 }
