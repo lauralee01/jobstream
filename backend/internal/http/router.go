@@ -2,10 +2,11 @@ package http
 
 import (
 	"fmt"
+	"jobstream/internal/jobs"
 	"net/http"
 )
 
-func NewRouter() *http.ServeMux {
+func NewRouter(jobService *jobs.JobService) *http.ServeMux {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {

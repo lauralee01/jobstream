@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"context"
+	"errors"
 	"jobstream/internal/domain"
 	"jobstream/internal/fetcher"
 	"log"
@@ -25,23 +26,36 @@ func NewJobService(repo domain.JobRepository, fetchers []fetcher.Fetcher) *JobSe
 
 // TODO: Implement a method that runs all fetchers and saves jobs to the database.
 func (s *JobService) SyncJobs(ctx context.Context) error {
-   // 1. Loop through all fetchers
-   for _, f := range s.fetchers {
-		// 2. Fetch jobs from each source
+	var hasErrors bool
+
+	for _, f := range s.fetchers {
 		jobs, err := f.Fetch()
 		if err != nil {
 			log.Printf("Error fetching jobs from %s: %v", f.Name(), err)
+			hasErrors = true
 			continue
 		}
-		// 3. Save each job to the repo
+
 		for _, job := range jobs {
 			job.Platform = f.Name()
-            if err := s.repo.Save(ctx, &job); err != nil {
-                log.Printf("Error saving job from %s (id=%s): %v", f.Name(), job.ID, err)
-                continue
-            }
+
+			if err := s.repo.Save(ctx, &job); err != nil {
+				log.Printf(
+					"Error saving job from %s (id=%s): %v",
+					f.Name(),
+					job.ID,
+					err,
+				)
+
+				hasErrors = true
+				continue
+			}
 		}
-   }
-  
-   return nil
+	}
+
+	if hasErrors {
+		return errors.New("some operations failed during sync")
+	}
+
+	return nil
 }
