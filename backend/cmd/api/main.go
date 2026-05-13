@@ -10,6 +10,7 @@ import (
 	"jobstream/internal/db"
 	"jobstream/internal/fetcher"
 	"jobstream/internal/jobs"
+	"jobstream/internal/scheduler"
 
 	apphttp "jobstream/internal/http"
 
@@ -18,7 +19,7 @@ import (
 )
 
 func main() {
-	if err := godotenv.Load(); err != nil {
+	if err := godotenv.Load("../.env"); err != nil {
 		log.Printf("godotenv: %v (using environment variables only)", err)
 	}
 	// Load database URL from environment variables
@@ -44,6 +45,13 @@ func main() {
 
 	// 5. Initialize Job Service
 	jobService := jobs.NewJobService(repo, fetchers)
+
+	// 6. Start Scheduler (runs in background)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	scheduler := scheduler.NewScheduler(jobService, 10*time.Second)
+	scheduler.Start(ctx)
 
 	// 6. Initialize HTTP Router with job service
 	router := apphttp.NewRouter(jobService)
