@@ -21,3 +21,4 @@ func (m *MockFetcher) Name() string { return "Mock" }
 func (m *MockFetcher) Fetch() ([]domain.Job, error) {
 	return []domain.Job{{ID: "1", SourceID: "1", Platform: "Mock", Title: "Software Engineer Mock", Company: "Mock Company", Location: "Mock Location", Description: "Mock Description", URL: "Mock URL", Salary: "Mock Salary", PostedAt: time.Now(), CreatedAt: time.Now()}}, nil
 }
+

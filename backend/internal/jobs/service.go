@@ -59,3 +59,8 @@ func (s *JobService) SyncJobs(ctx context.Context) error {
 
 	return nil
 }
+
+// GetJobs returns all jobs from the database.
+func (s *JobService) GetJobs(ctx context.Context) ([]domain.Job, error) {
+	return s.repo.FindAll(ctx)
+}

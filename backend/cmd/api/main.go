@@ -9,6 +9,7 @@ import (
 
 	"jobstream/internal/db"
 	"jobstream/internal/fetcher"
+	"jobstream/internal/fetcher/linkedin"
 	"jobstream/internal/jobs"
 	"jobstream/internal/scheduler"
 
@@ -41,6 +42,7 @@ func main() {
 	// 4. Register fetchers
 	fetchers := []fetcher.Fetcher{
 		&fetcher.MockFetcher{},
+		&linkedin.Fetcher{},
 	}
 
 	// 5. Initialize Job Service
@@ -50,7 +52,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	scheduler := scheduler.NewScheduler(jobService, 10*time.Second)
+	scheduler := scheduler.NewScheduler(jobService, 10*time.Hour)
 	scheduler.Start(ctx)
 
 	// 6. Initialize HTTP Router with job service

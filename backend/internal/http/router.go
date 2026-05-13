@@ -20,6 +20,6 @@ func NewRouter(jobService *jobs.JobService) *http.ServeMux {
 	// Job routes
 	jobHandler := NewJobHandler(jobService)
 	mux.HandleFunc("/api/v1/jobs/sync", jobHandler.SyncJobs)
-
+	mux.HandleFunc("GET /api/v1/jobs", jobHandler.GetJobs)
 	return mux
 }
