@@ -46,13 +46,6 @@
           Remote Only
         </NuxtLink>
       </div>
-
-      <div class="mt-24 grid grid-cols-2 md:grid-cols-4 gap-8 opacity-40 dark:opacity-60 grayscale dark:invert transition-all">
-        <div class="font-black text-2xl italic dark:text-white">LinkedIn</div>
-        <div class="font-black text-2xl italic dark:text-white">Indeed</div>
-        <div class="font-black text-2xl italic dark:text-white">Glassdoor</div>
-        <div class="font-black text-2xl italic dark:text-white">Handshake</div>
-      </div>
     </main>
   </div>
 </template>
