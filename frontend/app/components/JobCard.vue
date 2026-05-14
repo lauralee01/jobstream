@@ -30,7 +30,7 @@ const getPlatformStyle = (platform) => {
 </script>
 
 <template>
-  <div class="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+  <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 hover:shadow-md transition-all duration-300">
     <div class="flex justify-between items-start mb-4">
       <div class="flex items-center gap-2">
         <span 
@@ -39,23 +39,23 @@ const getPlatformStyle = (platform) => {
         >
           {{ job.platform }}
         </span>
-        <span class="text-xs text-gray-500">{{ formatDate(job.posted_at) }}</span>
+        <span class="text-xs text-gray-500 dark:text-gray-400">{{ formatDate(job.posted_at) }}</span>
       </div>
-      <button class="text-gray-400 hover:text-blue-600">
+      <button class="text-gray-400 hover:text-blue-600 transition-colors">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
         </svg>
       </button>
     </div>
 
-    <h3 class="text-xl font-bold text-gray-900 mb-1">
+    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-1 transition-colors">
       {{ job.title }}
     </h3>
-    <p class="text-lg text-blue-600 font-medium mb-3">
+    <p class="text-lg text-blue-600 dark:text-blue-400 font-medium mb-3">
       {{ job.company }}
     </p>
 
-    <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-6">
+    <div class="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400 mb-6 transition-colors">
       <div class="flex items-center gap-1">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -75,7 +75,7 @@ const getPlatformStyle = (platform) => {
       <a 
         :href="job.url" 
         target="_blank"
-        class="bg-blue-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-blue-700 transition-colors inline-flex items-center gap-2"
+        class="bg-blue-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-blue-700 transition-all inline-flex items-center gap-2 shadow-lg shadow-blue-200 dark:shadow-none"
       >
         View Details
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
