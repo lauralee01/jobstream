@@ -42,7 +42,15 @@ func (h *JobHandler) GetJobs(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	if err := json.NewEncoder(w).Encode(jobs); err != nil {
+	response := map[string]interface{}{
+		"metadata": map[string]interface{}{
+			"total_pages": 1, // Basic pagination info for now
+			"total_results": len(jobs),
+		},
+		"data": jobs,
+	}
+
+	if err := json.NewEncoder(w).Encode(response); err != nil {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 	}
 }

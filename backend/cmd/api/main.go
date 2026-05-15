@@ -52,7 +52,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	scheduler := scheduler.NewScheduler(jobService, 3*time.Hour)
+	scheduler := scheduler.NewScheduler(jobService, 1*time.Minute)
 	scheduler.Start(ctx)
 
 	// 6. Initialize HTTP Router with job service
