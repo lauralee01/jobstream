@@ -73,7 +73,5 @@ func (c *Client) Fetch(ctx context.Context) ([]domain.Job, error) {
 		jobs = append(jobs, remotiveJob.toDomain())
 	}
 
-	fmt.Println(jobs)
-
 	return jobs, nil
 }

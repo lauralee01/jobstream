@@ -1,6 +1,7 @@
 package remotive
 
 import (
+	"fmt"
 	"jobstream/internal/domain"
 	"strconv"
 	"time"
@@ -22,14 +23,23 @@ type RemotiveJob struct {
 	CandidateRequiredLocation string `json:"candidate_required_location"`
 	Salary         string    `json:"salary"`
 	Description    string    `json:"description"`
-	PublicationDate time.Time `json:"publication_date"`
+	PublicationDate string `json:"publication_date"`
 }
 
 // toDomain converts a Remotive DTO into our core domain Entity.
 // This isolates the rest of our application from Remotive's specific JSON structure.
 func (r *RemotiveJob) toDomain() domain.Job {
+	// The API returns dates like "2026-05-13T06:46:26" (no timezone)
+	// We parse it manually instead of relying on the default RFC3339 unmarshaler
+	postedAt, err := time.Parse("2006-01-02T15:04:05", r.PublicationDate)
+	if err != nil {
+		// Fallback to now if parsing fails
+		postedAt = time.Now()
+	}
+
 	return domain.Job{
-		// Note: We leave ID blank. The DB layer will generate a UUID for us.
+		// Generate a deterministic ID based on the platform and source ID
+		ID:          fmt.Sprintf("remotive-%d", r.ID),
 		SourceID:    strconv.Itoa(r.ID),
 		// Platform is set by the JobService using the fetcher's Name()
 		Title:       r.Title,
@@ -38,7 +48,7 @@ func (r *RemotiveJob) toDomain() domain.Job {
 		Description: r.Description,
 		URL:         r.URL,
 		Salary:      r.Salary,
-		PostedAt:    r.PublicationDate,
+		PostedAt:    postedAt,
 		CreatedAt:   time.Now(),
 	}
 }
