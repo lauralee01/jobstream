@@ -9,7 +9,7 @@ import (
 
 	"jobstream/internal/db"
 	"jobstream/internal/fetcher"
-	"jobstream/internal/fetcher/linkedin"
+	"jobstream/internal/fetcher/remotive"
 	"jobstream/internal/jobs"
 	"jobstream/internal/scheduler"
 
@@ -41,8 +41,8 @@ func main() {
 
 	// 4. Register fetchers
 	fetchers := []fetcher.Fetcher{
-		&fetcher.MockFetcher{},
-		&linkedin.Fetcher{},
+		&fetcher.MockFetcher{}, // Keep mock for testing
+		remotive.NewClient(),
 	}
 
 	// 5. Initialize Job Service

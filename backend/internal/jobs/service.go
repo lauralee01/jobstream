@@ -29,7 +29,7 @@ func (s *JobService) SyncJobs(ctx context.Context) error {
 	var hasErrors bool
 
 	for _, f := range s.fetchers {
-		jobs, err := f.Fetch()
+		jobs, err := f.Fetch(ctx)
 		if err != nil {
 			log.Printf("Error fetching jobs from %s: %v", f.Name(), err)
 			hasErrors = true
