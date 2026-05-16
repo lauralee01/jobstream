@@ -21,6 +21,7 @@ type RemotiveJob struct {
 	Title          string    `json:"title"`
 	CompanyName    string    `json:"company_name"`
 	CandidateRequiredLocation string `json:"candidate_required_location"`
+	Category       string    `json:"category"`
 	Salary         string    `json:"salary"`
 	Description    string    `json:"description"`
 	PublicationDate string `json:"publication_date"`
@@ -45,6 +46,7 @@ func (r *RemotiveJob) toDomain() domain.Job {
 		Title:       r.Title,
 		Company:     r.CompanyName,
 		Location:    r.CandidateRequiredLocation,
+		Category:    r.Category,
 		Description: r.Description,
 		URL:         r.URL,
 		Salary:      r.Salary,
