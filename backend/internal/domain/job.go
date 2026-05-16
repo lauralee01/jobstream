@@ -22,6 +22,22 @@ type Job struct {
 	CreatedAt   time.Time `json:"created_at"`
 }
 
+// JobFilter defines search and pagination parameters.
+type JobFilter struct {
+	Keyword   string
+	Location  string
+	Category  string
+	Platforms []string
+
+	IsRemote *bool
+
+	Page  int
+	Limit int
+
+	SortBy    string
+	SortOrder string
+}
+
 // Source represents an external job provider.
 type Source struct {
 	ID   string `json:"id"`
@@ -33,5 +49,17 @@ type Source struct {
 // This allows us to swap PostgreSQL for something else later without changing business logic!
 type JobRepository interface {
 	Save(ctx context.Context, job *Job) error
-	FindAll(ctx context.Context) ([]Job, error)
+	FindAll(ctx context.Context, filter JobFilter) ([]Job, int64, error)
+}
+
+type JobsResponse struct {
+	Metadata Metadata   `json:"metadata"`
+	Data     []Job      `json:"data"`
+}
+
+type Metadata struct {
+	TotalPages   int   `json:"total_pages"`
+	TotalResults int64 `json:"total_results"`
+	Page         int   `json:"page"`
+	Limit        int   `json:"limit"`
 }

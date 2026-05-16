@@ -29,10 +29,19 @@ func (r *PostgresJobRepository) Save(ctx context.Context, job *domain.Job) error
 	return nil
 }
 
-func (r *PostgresJobRepository) FindAll(ctx context.Context) ([]domain.Job, error) {
-	rows, err := r.db.Query(ctx, "SELECT id, source_id, platform, title, company, location, category, description, url, salary, posted_at, created_at FROM jobs")
+func (r *PostgresJobRepository) FindAll(ctx context.Context, filter domain.JobFilter) ([]domain.Job, int64, error) {
+	baseQuery := "SELECT id, source_id, platform, title, company, location, category, description, url, salary, posted_at, created_at FROM jobs "
+
+	args := []interface{}{}
+	query := baseQuery
+
+	paramIdx := 1
+
+	args = append(args, "%"+filter.Keyword+"%")
+
+	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 	var jobs []domain.Job
@@ -40,12 +49,13 @@ func (r *PostgresJobRepository) FindAll(ctx context.Context) ([]domain.Job, erro
 		var job domain.Job
 		err := rows.Scan(&job.ID, &job.SourceID, &job.Platform, &job.Title, &job.Company, &job.Location, &job.Category, &job.Description, &job.URL, &job.Salary, &job.PostedAt, &job.CreatedAt)
 		if err != nil {
-			return nil, err
+			return nil, int64(paramIdx), err
 		}
 		jobs = append(jobs, job)
+		paramIdx++
 	}
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, int64(paramIdx), err
 	}
-	return jobs, nil
+	return jobs, int64(paramIdx), nil
 }
