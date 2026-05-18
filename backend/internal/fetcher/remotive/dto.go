@@ -2,7 +2,9 @@ package remotive
 
 import (
 	"fmt"
+	"html"
 	"jobstream/internal/domain"
+	"regexp"
 	"strconv"
 	"time"
 )
@@ -27,6 +29,14 @@ type RemotiveJob struct {
 	PublicationDate           string `json:"publication_date"`
 }
 
+var htmlTagRegex = regexp.MustCompile(`<[^>]*>`)
+
+// stripHTML removes all HTML tags and decodes common HTML entities to return clean plain text.
+func stripHTML(src string) string {
+	plain := htmlTagRegex.ReplaceAllString(src, "")
+	return html.UnescapeString(plain)
+}
+
 // toDomain converts a Remotive DTO into our core domain Entity.
 // This isolates the rest of our application from Remotive's specific JSON structure.
 func (r *RemotiveJob) toDomain() domain.Job {
@@ -47,7 +57,7 @@ func (r *RemotiveJob) toDomain() domain.Job {
 		Company:     r.CompanyName,
 		Location:    r.CandidateRequiredLocation,
 		Category:    r.Category,
-		Description: r.Description,
+		Description: stripHTML(r.Description),
 		URL:         r.URL,
 		Salary:      r.Salary,
 		PostedAt:    postedAt,

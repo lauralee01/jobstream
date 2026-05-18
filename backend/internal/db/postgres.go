@@ -79,11 +79,9 @@ func (r *PostgresJobRepository) FindAll(
 					title ILIKE $%d OR
 					company ILIKE $%d OR
 					location ILIKE $%d OR
-					description ILIKE $%d OR
 					category ILIKE $%d
 				)
 			`,
-				paramIdx,
 				paramIdx,
 				paramIdx,
 				paramIdx,
