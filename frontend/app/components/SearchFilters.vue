@@ -35,12 +35,16 @@ const filters = ref({ ...props.modelValue })
 
 // Sync local ref with parent modelValue
 watch(() => props.modelValue, (newVal) => {
-  filters.value = { ...newVal }
+  if (JSON.stringify(newVal) !== JSON.stringify(filters.value)) {
+    filters.value = { ...newVal }
+  }
 }, { deep: true })
 
 // Emit changes
 watch(filters, (newVal) => {
-  emit('update:modelValue', newVal)
+  if (JSON.stringify(newVal) !== JSON.stringify(props.modelValue)) {
+    emit('update:modelValue', newVal)
+  }
 }, { deep: true })
 
 const clearFilters = () => {
