@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"jobstream/internal/domain"
+	"log"
 	"strings"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -47,7 +48,7 @@ func (r *PostgresJobRepository) FindAll(
 			title,
 			company,
 			location,
-			category,
+			COALESCE(category, ''),
 			description,
 			url,
 			salary,
@@ -62,10 +63,15 @@ func (r *PostgresJobRepository) FindAll(
 	args := []interface{}{}
 	paramIdx := 1
 
+	log.Println("filter", filter)
+	
+
 	// =========================
 	// Keyword Search
 	// =========================
+
 	if filter.Keyword != "" {
+
 		conditions = append(
 			conditions,
 			fmt.Sprintf(`
@@ -92,7 +98,9 @@ func (r *PostgresJobRepository) FindAll(
 	// =========================
 	// Category Filter
 	// =========================
+
 	if filter.Category != "" {
+
 		conditions = append(
 			conditions,
 			fmt.Sprintf("category ILIKE $%d", paramIdx),
@@ -105,7 +113,9 @@ func (r *PostgresJobRepository) FindAll(
 	// =========================
 	// Location Filter
 	// =========================
+
 	if filter.Location != "" {
+
 		conditions = append(
 			conditions,
 			fmt.Sprintf("location ILIKE $%d", paramIdx),
@@ -118,33 +128,44 @@ func (r *PostgresJobRepository) FindAll(
 	// =========================
 	// Platform Filter
 	// =========================
-	if len(filter.Platforms) > 0 && filter.Platforms[0] != "" {
+
+	if len(filter.Platforms) > 0 {
 
 		platformConditions := []string{}
 
 		for _, platform := range filter.Platforms {
+
+			if platform == "" {
+				continue
+			}
+
 			platformConditions = append(
 				platformConditions,
 				fmt.Sprintf("platform = $%d", paramIdx),
 			)
 
 			args = append(args, platform)
+
 			paramIdx++
 		}
 
-		conditions = append(
-			conditions,
-			"("+strings.Join(platformConditions, " OR ")+")",
-		)
+		if len(platformConditions) > 0 {
+			conditions = append(
+				conditions,
+				"("+strings.Join(platformConditions, " OR ")+")",
+			)
+		}
 	}
 
 	// =========================
-	// Build WHERE Clause
+	// Build WHERE clause
 	// =========================
+
 	query := baseQuery
 	countSQL := countQuery
 
 	if len(conditions) > 0 {
+
 		whereClause := " WHERE " + strings.Join(conditions, " AND ")
 
 		query += whereClause
@@ -189,7 +210,7 @@ func (r *PostgresJobRepository) FindAll(
 	}
 
 	if filter.Limit <= 0 {
-		filter.Limit = 10
+		filter.Limit = 20
 	}
 
 	offset := (filter.Page - 1) * filter.Limit
@@ -203,28 +224,36 @@ func (r *PostgresJobRepository) FindAll(
 	args = append(args, filter.Limit, offset)
 
 	// =========================
-	// Total Count Query
+	// Total Count
 	// =========================
 
 	var total int64
 
-	if err := r.db.QueryRow(ctx, countSQL, args[:len(args)-2]...).Scan(&total); err != nil {
+	err := r.db.QueryRow(
+		ctx,
+		countSQL,
+		args[:len(args)-2]...,
+	).Scan(&total)
+
+	if err != nil {
 		return nil, 0, err
 	}
 
 	// =========================
-	// Main Query
+	// Execute Query
 	// =========================
 
 	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
 		return nil, 0, err
 	}
+
 	defer rows.Close()
 
 	jobs := []domain.Job{}
 
 	for rows.Next() {
+
 		var job domain.Job
 
 		err := rows.Scan(
@@ -252,6 +281,7 @@ func (r *PostgresJobRepository) FindAll(
 	if err := rows.Err(); err != nil {
 		return nil, 0, err
 	}
+	log.Println("Found", total, "jobs", jobs)
 
 	return jobs, total, nil
 }

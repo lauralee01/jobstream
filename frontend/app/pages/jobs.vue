@@ -14,8 +14,26 @@ const searchParams = ref({
   page: parseInt(route.query.page) || 1
 })
 
+watch(
+  () => route.query,
+  (query) => {
+    searchParams.value = {
+      keyword: query.q || '',
+      location: query.location || '',
+      category: query.category || '',
+      platforms: query.platforms
+        ? query.platforms.split(',')
+        : [],
+      remote: query.work_model === 'remote',
+      salaryMin: query.salary_min || '',
+      page: parseInt(query.page) || 1
+    }
+  },
+  { immediate: true }
+)
+
 // Computed jobs and metadata from the composable
-const { jobs, metadata, pending, error } = await fetchJobs(searchParams.value)
+const { jobs, metadata, pending, error } = fetchJobs(searchParams)
 
 // Handle search trigger
 const handleSearch = () => {
@@ -42,7 +60,7 @@ const updateUrlAndFetch = () => {
     page: searchParams.value.page > 1 ? searchParams.value.page : undefined
   }
   
-  router.push({ query })
+  router.replace({ query })
 }
 
 // Sync jobs helper

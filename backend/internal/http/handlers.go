@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"jobstream/internal/domain"
 	"jobstream/internal/jobs"
+	"log"
 	"math"
 	"net/http"
 	"strconv"
@@ -40,59 +41,85 @@ func (h *JobHandler) SyncJobs(w http.ResponseWriter, r *http.Request) {
 func (h *JobHandler) GetJobs(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 
-	page, err := strconv.Atoi(query.Get("page"))
-	if err != nil || page <= 0 {
-		page = 1
+	// =========================
+	// Parse platforms
+	// =========================
+
+	platforms := []string{}	
+
+	if query.Get("platforms") != "" {
+		platforms = strings.Split(
+			query.Get("platforms"),
+			",",
+		)
 	}
 
-	limit, err := strconv.Atoi(query.Get("limit"))
-	if err != nil || limit <= 0 || limit > 100 {
-		limit = 10
+	// =========================
+	// Parse page
+	// =========================
+
+	page := 1
+
+	if p := query.Get("page"); p != "" {
+		parsedPage, err := strconv.Atoi(p)
+		if err == nil && parsedPage > 0 {
+			page = parsedPage
+		}
 	}
 
-	var platforms []string
-	if p := query.Get("platform"); p != "" {
-		platforms = strings.Split(p, ",")
+	// =========================
+	// Parse limit
+	// =========================
+
+	limit := 20
+
+	if l := query.Get("limit"); l != "" {
+		parsedLimit, err := strconv.Atoi(l)
+		if err == nil && parsedLimit > 0 {
+			limit = parsedLimit
+		}
 	}
 
-	var isRemote *bool
-	if remote := query.Get("is_remote"); remote != "" {
-		val := remote == "true"
-		isRemote = &val
-	}
-
-	sortBy := query.Get("sort_by")
-	if sortBy == "" {
-		sortBy = "created_at"
-	}
-
-	sortOrder := query.Get("sort_order")
-	if sortOrder == "" {
-		sortOrder = "desc"
-	}
+	// =========================
+	// Build filter
+	// =========================
 
 	filter := domain.JobFilter{
 		Keyword:   query.Get("keyword"),
 		Location:  query.Get("location"),
 		Category:  query.Get("category"),
 		Platforms: platforms,
-		IsRemote:  isRemote,
 		Page:      page,
 		Limit:     limit,
-		SortBy:    sortBy,
-		SortOrder: sortOrder,
+		SortBy:    "created_at",
+		SortOrder: "desc",
 	}
 
+	// =========================
+	// Fetch jobs
+	// =========================
+
 	jobs, total, err := h.service.GetJobs(r.Context(), filter)
+
+	log.Println("Found", total, "jobs")
+	log.Println("jobs", jobs)
+
 	if err != nil {
 		http.Error(w, "Failed to get jobs", http.StatusInternalServerError)
 		return
 	}
 
-	totalPages := 1
-	if limit > 0 {
-		totalPages = int(math.Ceil(float64(total) / float64(limit)))
-	}
+	// =========================
+	// Calculate pagination
+	// =========================
+
+	totalPages := int(math.Ceil(float64(total) / float64(limit)))
+
+	// =========================
+	// Response
+	// =========================
+
+	w.Header().Set("Content-Type", "application/json")
 
 	response := domain.JobsResponse{
 		Metadata: domain.Metadata{
@@ -104,8 +131,7 @@ func (h *JobHandler) GetJobs(w http.ResponseWriter, r *http.Request) {
 		Data: jobs,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
+	log.Println("response", response)
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
