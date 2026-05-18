@@ -25,18 +25,18 @@ func NewScheduler(js *jobs.JobService, interval time.Duration) *Scheduler {
 func (s *Scheduler) Start(ctx context.Context) {
 	ticker := time.NewTicker(s.interval)
 	go func() {
-        for {
-            select {
-            case <-ticker.C:
-                log.Println("Running scheduled job sync...")
-                if err := s.jobService.SyncJobs(ctx); err != nil {
-                    log.Printf("Scheduler error: %v\n", err)
-                }
-            case <-ctx.Done():
-                log.Println("Scheduler stopped")
-                ticker.Stop()
-                return
-            }
-        }
-    }()
+		for {
+			select {
+			case <-ticker.C:
+				log.Println("Running scheduled job sync...")
+				if err := s.jobService.SyncJobs(ctx); err != nil {
+					log.Printf("Scheduler error: %v\n", err)
+				}
+			case <-ctx.Done():
+				log.Println("Scheduler stopped")
+				ticker.Stop()
+				return
+			}
+		}
+	}()
 }

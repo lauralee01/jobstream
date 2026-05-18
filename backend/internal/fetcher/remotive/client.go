@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	remotiveURL = "https://remotive.com/api/remote-jobs"
+	remotiveURL  = "https://remotive.com/api/remote-jobs"
 	platformName = "Remotive"
 )
 

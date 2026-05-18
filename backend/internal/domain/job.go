@@ -53,8 +53,8 @@ type JobRepository interface {
 }
 
 type JobsResponse struct {
-	Metadata Metadata   `json:"metadata"`
-	Data     []Job      `json:"data"`
+	Metadata Metadata `json:"metadata"`
+	Data     []Job    `json:"data"`
 }
 
 type Metadata struct {

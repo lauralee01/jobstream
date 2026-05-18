@@ -16,15 +16,15 @@ type APIResponse struct {
 // RemotiveJob represents a single job from the Remotive API.
 // We map only the fields we care about.
 type RemotiveJob struct {
-	ID             int       `json:"id"`
-	URL            string    `json:"url"`
-	Title          string    `json:"title"`
-	CompanyName    string    `json:"company_name"`
+	ID                        int    `json:"id"`
+	URL                       string `json:"url"`
+	Title                     string `json:"title"`
+	CompanyName               string `json:"company_name"`
 	CandidateRequiredLocation string `json:"candidate_required_location"`
-	Category       string    `json:"category"`
-	Salary         string    `json:"salary"`
-	Description    string    `json:"description"`
-	PublicationDate string `json:"publication_date"`
+	Category                  string `json:"category"`
+	Salary                    string `json:"salary"`
+	Description               string `json:"description"`
+	PublicationDate           string `json:"publication_date"`
 }
 
 // toDomain converts a Remotive DTO into our core domain Entity.
@@ -40,8 +40,8 @@ func (r *RemotiveJob) toDomain() domain.Job {
 
 	return domain.Job{
 		// Generate a deterministic ID based on the platform and source ID
-		ID:          fmt.Sprintf("remotive-%d", r.ID),
-		SourceID:    strconv.Itoa(r.ID),
+		ID:       fmt.Sprintf("remotive-%d", r.ID),
+		SourceID: strconv.Itoa(r.ID),
 		// Platform is set by the JobService using the fetcher's Name()
 		Title:       r.Title,
 		Company:     r.CompanyName,

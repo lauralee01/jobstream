@@ -22,7 +22,7 @@ func NewRouter(jobService *jobs.JobService) http.Handler {
 	// Make sure to handle preflight OPTIONS requests for CORS
 	mux.HandleFunc("/api/v1/jobs/sync", jobHandler.SyncJobs)
 	mux.HandleFunc("GET /api/v1/jobs", jobHandler.GetJobs)
-	
+
 	return corsMiddleware(mux)
 }
 
@@ -41,4 +41,3 @@ func corsMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-
