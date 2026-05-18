@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"jobstream/internal/domain"
-	"log"
 	"strings"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -62,8 +61,6 @@ func (r *PostgresJobRepository) FindAll(
 	conditions := []string{}
 	args := []interface{}{}
 	paramIdx := 1
-
-	log.Println("filter", filter)
 	
 
 	// =========================
@@ -279,7 +276,6 @@ func (r *PostgresJobRepository) FindAll(
 	if err := rows.Err(); err != nil {
 		return nil, 0, err
 	}
-	log.Println("Found", total, "jobs", jobs)
 
 	return jobs, total, nil
 }

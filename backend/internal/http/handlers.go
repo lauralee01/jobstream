@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"jobstream/internal/domain"
 	"jobstream/internal/jobs"
-	"log"
 	"math"
 	"net/http"
 	"strconv"
@@ -101,9 +100,6 @@ func (h *JobHandler) GetJobs(w http.ResponseWriter, r *http.Request) {
 
 	jobs, total, err := h.service.GetJobs(r.Context(), filter)
 
-	log.Println("Found", total, "jobs")
-	log.Println("jobs", jobs)
-
 	if err != nil {
 		http.Error(w, "Failed to get jobs", http.StatusInternalServerError)
 		return
@@ -130,8 +126,6 @@ func (h *JobHandler) GetJobs(w http.ResponseWriter, r *http.Request) {
 		},
 		Data: jobs,
 	}
-
-	log.Println("response", response)
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
