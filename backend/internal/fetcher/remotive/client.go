@@ -20,6 +20,7 @@ type Client struct {
 	baseURL    string
 }
 
+
 // NewClient creates a new Remotive fetcher client.
 // We configure a custom HTTP client with explicit timeouts to prevent hanging requests.
 func NewClient() *Client {
