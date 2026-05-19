@@ -33,7 +33,7 @@ watch(
 )
 
 // Computed jobs and metadata from the composable
-const { jobs, metadata, pending, error } = fetchJobs(searchParams)
+const { jobs, metadata, pending, error, refresh } = fetchJobs(searchParams)
 
 // Handle search trigger
 const handleSearch = () => {
@@ -69,7 +69,8 @@ const handleSync = async () => {
   isSyncing.value = true
   await syncJobs()
   isSyncing.value = false
-  // Optionally refresh the list after sync
+  // Refresh the list after sync
+  refresh()
 }
 </script>
 

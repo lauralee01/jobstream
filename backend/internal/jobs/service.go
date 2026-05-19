@@ -64,3 +64,8 @@ func (s *JobService) SyncJobs(ctx context.Context) error {
 func (s *JobService) GetJobs(ctx context.Context, filter domain.JobFilter) ([]domain.Job, int64, error) {
 	return s.repo.FindAll(ctx, filter)
 }
+
+// GetCategories returns all unique job categories.
+func (s *JobService) GetCategories(ctx context.Context) ([]string, error) {
+	return s.repo.GetCategories(ctx)
+}

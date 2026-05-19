@@ -69,8 +69,19 @@ export const useJobs = () => {
     }
   }
 
+  // =========================================
+  // Fetch Categories
+  // =========================================
+
+  const fetchCategories = () => {
+    return useFetch(`${API_BASE}/jobs/categories`, {
+      key: 'categories'
+    })
+  }
+
   return {
     fetchJobs,
-    syncJobs
+    syncJobs,
+    fetchCategories
   }
 }

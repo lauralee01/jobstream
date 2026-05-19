@@ -279,3 +279,32 @@ func (r *PostgresJobRepository) FindAll(
 
 	return jobs, total, nil
 }
+
+func (r *PostgresJobRepository) GetCategories(ctx context.Context) ([]string, error) {
+	query := `
+		SELECT DISTINCT category 
+		FROM jobs 
+		WHERE category IS NOT NULL AND category != '' 
+		ORDER BY category ASC
+	`
+	rows, err := r.db.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var categories []string
+	for rows.Next() {
+		var category string
+		if err := rows.Scan(&category); err != nil {
+			return nil, err
+		}
+		categories = append(categories, category)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return categories, nil
+}

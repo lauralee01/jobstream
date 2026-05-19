@@ -22,6 +22,7 @@ func NewRouter(jobService *jobs.JobService) http.Handler {
 	// Make sure to handle preflight OPTIONS requests for CORS
 	mux.HandleFunc("/api/v1/jobs/sync", jobHandler.SyncJobs)
 	mux.HandleFunc("GET /api/v1/jobs", jobHandler.GetJobs)
+	mux.HandleFunc("GET /api/v1/jobs/categories", jobHandler.GetCategories)
 
 	return corsMiddleware(mux)
 }

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"jobstream/internal/domain"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -75,6 +74,5 @@ func (c *Client) Fetch(ctx context.Context) ([]domain.Job, error) {
 	for i, r := range data.Results {
 		jobs[i] = r.ToJob()
 	}
-	log.Printf("Fetched %d jobs from Adzuna", len(jobs), jobs)
 	return jobs, nil
 }

@@ -3,6 +3,7 @@ package adzuna
 import (
 	"fmt"
 	"jobstream/internal/domain"
+	"strings"
 	"time"
 )
 
@@ -17,7 +18,7 @@ type AdzunaJob struct {
 		DisplayName string `json:"display_name"`
 	} `json:"company"`
 	Location       struct {
-		Area string `json:"area"`
+		Area []string `json:"area"`
 	} `json:"location"`
 	Category       struct {
 		Label string `json:"label"`
@@ -39,7 +40,7 @@ func (aj AdzunaJob) ToJob() domain.Job {
 		SourceID:       aj.ID,
 		Title:          aj.Title,
 		Company:        aj.Company.DisplayName,
-		Location:       aj.Location.Area,
+		Location:       strings.Join(aj.Location.Area, ", "),
 		Category:       aj.Category.Label,
 		Description:    aj.Description,
 		URL:            aj.URL,

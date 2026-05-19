@@ -36,6 +36,20 @@ func (h *JobHandler) SyncJobs(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// GetCategories returns a distinct list of non-empty categories.
+func (h *JobHandler) GetCategories(w http.ResponseWriter, r *http.Request) {
+	categories, err := h.service.GetCategories(r.Context())
+	if err != nil {
+		http.Error(w, "Failed to get categories", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(categories); err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+	}
+}
+
 // GetJobs fetches all jobs and returns them as JSON.
 func (h *JobHandler) GetJobs(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()

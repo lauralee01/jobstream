@@ -22,14 +22,9 @@ const platforms = [
   { id: 'handshake', name: 'Handshake' }
 ]
 
-const categories = [
-  'Software Engineer',
-  'Designer',
-  'Marketing',
-  'Sales',
-  'Accountant',
-  'Product Manager'
-]
+const { fetchCategories } = useJobs()
+const { data: fetchedCategories } = await fetchCategories()
+const categories = computed(() => fetchedCategories.value || [])
 
 const filters = ref({ ...props.modelValue })
 
