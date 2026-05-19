@@ -24,7 +24,7 @@ type AdzunaJob struct {
 		Label string `json:"label"`
 	} `json:"category"`
 	Description    string   `json:"description"`
-	URL    string   `json:"url"`
+	URL    string   `json:"redirect_url"`
 	Salary      string  `json:"salary"`
 	PublicationDate           string `json:"publication_date"`
 }

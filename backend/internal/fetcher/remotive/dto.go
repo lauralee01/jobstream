@@ -6,6 +6,7 @@ import (
 	"jobstream/internal/domain"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -56,11 +57,28 @@ func (r *RemotiveJob) toDomain() domain.Job {
 		Title:       r.Title,
 		Company:     r.CompanyName,
 		Location:    r.CandidateRequiredLocation,
-		Category:    r.Category,
+		Category:    parseCategoryFromURL(r.Category, r.URL),
 		Description: stripHTML(r.Description),
 		URL:         r.URL,
 		Salary:      r.Salary,
 		PostedAt:    postedAt,
 		CreatedAt:   time.Now(),
 	}
+}
+
+func parseCategoryFromURL(category string, url string) string {
+	if category != "" {
+		return category
+	}
+	prefix := "remotive.com/remote-jobs/"
+	idx := strings.Index(url, prefix)
+	if idx != -1 {
+		remaining := url[idx+len(prefix):]
+		parts := strings.Split(remaining, "/")
+		if len(parts) > 0 && parts[0] != "" {
+			formatted := strings.ReplaceAll(parts[0], "-", " ")
+			return strings.Title(formatted)
+		}
+	}
+	return ""
 }
