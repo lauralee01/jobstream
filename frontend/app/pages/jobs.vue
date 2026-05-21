@@ -49,7 +49,7 @@ const changePage = (newPage) => {
 }
 
 // Update URL to make the search state shareable and re-fetch
-const updateUrlAndFetch = () => {
+const updateUrlAndFetch = async () => {
   const query = {
     q: searchParams.value.keyword || undefined,
     location: searchParams.value.location || undefined,
@@ -60,7 +60,7 @@ const updateUrlAndFetch = () => {
     page: searchParams.value.page > 1 ? searchParams.value.page : undefined
   }
   
-  router.replace({ query })
+  await router.replace({ query })
 }
 
 // Sync jobs helper

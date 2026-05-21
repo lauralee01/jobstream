@@ -44,7 +44,7 @@ watch(filters, (newVal) => {
 }, { deep: true })
 
 const clearFilters = () => {
-  filters.value = {
+  const cleared = {
     keyword: '',
     location: '',
     platforms: [],
@@ -52,6 +52,8 @@ const clearFilters = () => {
     salaryMin: '',
     category: ''
   }
+  filters.value = cleared
+  emit('update:modelValue', cleared)
   emit('search')
 }
 </script>
