@@ -2,17 +2,19 @@ package weworkremotely
 
 import (
 	"context"
-	"encoding/xml"
 	"fmt"
 	"jobstream/internal/domain"
 	"log"
 	"net/http"
+	"strings"
 	"time"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
 const (
-	weworkremotelyURL = "https://weworkremotely.com/remote-jobs.rss"
-	platformName      = "WeWorkRemotely"
+	arbeitNowURL = "https://weworkremotely.com/remote-jobs"
+	platformName = "WeWorkRemotely"
 )
 
 type Client struct {
@@ -24,9 +26,9 @@ type Client struct {
 func NewClient() *Client {
 	return &Client{
 		httpClient: &http.Client{
-			Timeout: 15 * time.Second, // WWR RSS feed can be large, use a slightly longer timeout
+			Timeout: 10 * time.Second,
 		},
-		baseURL: weworkremotelyURL,
+		baseURL: arbeitNowURL,
 	}
 }
 
@@ -34,8 +36,9 @@ func (c *Client) Name() string {
 	return platformName
 }
 
-// Fetch retrieves jobs from WeWorkRemotely's public RSS feed and normalizes them.
+// Fetch jobs from WeWorkRemotely
 func (c *Client) Fetch(ctx context.Context) ([]domain.Job, error) {
+
 	// Create request with context
 	req, err := http.NewRequestWithContext(
 		ctx,
@@ -43,41 +46,87 @@ func (c *Client) Fetch(ctx context.Context) ([]domain.Job, error) {
 		c.baseURL,
 		nil,
 	)
+
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return nil, fmt.Errorf(
+			"failed to create request: %w",
+			err,
+		)
 	}
 
-	// Headers to represent a healthy user-agent
-	req.Header.Set("User-Agent", "JobStream-Aggregator/1.0 (https://github.com/example/jobstream)")
-	req.Header.Set("Accept", "application/xml, text/xml, */*")
+	// Headers
+	req.Header.Set(
+		"User-Agent",
+		"JobStream-Aggregator/1.0",
+	)
+
+	req.Header.Set(
+		"Accept",
+		"application/json",
+	)
 
 	// Execute request
 	resp, err := c.httpClient.Do(req)
+
 	if err != nil {
-		return nil, fmt.Errorf("http request failed: %w", err)
+		return nil, fmt.Errorf(
+			"http request failed: %w",
+			err,
+		)
 	}
+
 	defer resp.Body.Close()
 
 	// Validate response
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		return nil, fmt.Errorf(
+			"unexpected status code: %d",
+			resp.StatusCode,
+		)
 	}
 
-	// Decode XML RSS feed
-	var feed RSS
-	if err := xml.NewDecoder(resp.Body).Decode(&feed); err != nil {
-		return nil, fmt.Errorf("failed to decode XML RSS response: %w", err)
+	// Decode JSON
+
+	// Parse HTML
+	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse HTML: %w", err)
 	}
 
-	// Map RSS items to domain job entities
-	items := feed.Channel.Items
-	jobs := make([]domain.Job, 0, len(items))
+	var jobs []domain.Job
 
-	for _, item := range items {
-		job := item.toDomain()
+	// Each job listing is inside <li class="feature">
+	doc.Find("li.feature").Each(func(i int, s *goquery.Selection) {
+
+		title := strings.TrimSpace(s.Find("span.title").Text())
+		company := strings.TrimSpace(s.Find("span.company").Text())
+		location := strings.TrimSpace(s.Find("span.region").Text())
+		category := strings.TrimSpace(s.Find("span.company").Parent().Parent().Find("h2").Text())
+
+		// Extract URL
+		href, exists := s.Find("a").Attr("href")
+		if !exists {
+			return
+		}
+
+		url := "https://weworkremotely.com" + href
+
+		// PostedAt is not provided → use now
+		postedAt := time.Now()
+
+		job := domain.Job{
+			Title:    title,
+			Company:  company,
+			Location: location,
+			URL:      url,
+			PostedAt: postedAt,
+			Category: category,
+		}
+
+		log.Printf("Job: %v", job)
+
 		jobs = append(jobs, job)
-	}
+	})
 
-	log.Printf("Successfully fetched and normalized %d jobs from %s", len(jobs), c.Name())
 	return jobs, nil
 }

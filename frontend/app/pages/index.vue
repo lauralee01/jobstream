@@ -1,7 +1,15 @@
 <script setup>
-// Redirect home to /jobs automatically for now, 
-// or show a simple hero section.
-// navigateTo('/jobs')
+const { fetchPlatforms } = useJobs()
+const { data: fetchedPlatforms } = await fetchPlatforms()
+const platforms = computed(() => {
+  if(!fetchedPlatforms.value) {
+    return []
+  }
+  return fetchedPlatforms.value.map(p => ({
+    name: p
+  }))
+})
+
 </script>
 
 <template>
@@ -28,7 +36,7 @@
         <span class="text-blue-600">All in One Stream.</span>
       </h1>
       <p class="text-xl text-gray-600 dark:text-gray-400 mb-10 max-w-2xl mx-auto">
-        Aggregate job listings from Remotive, Adzuna, and more. 
+        Aggregate job listings from {{ platforms.map(p => p.name).join(', ') }}. 
         Filter, search, and apply from a single, fast interface.
       </p>
       
