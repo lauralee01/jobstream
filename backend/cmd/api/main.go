@@ -11,6 +11,7 @@ import (
 	"jobstream/internal/fetcher"
 	"jobstream/internal/fetcher/adzuna"
 	"jobstream/internal/fetcher/remotive"
+	"jobstream/internal/fetcher/weworkremotely"
 	"jobstream/internal/jobs"
 	"jobstream/internal/scheduler"
 
@@ -45,6 +46,7 @@ func main() {
 		&fetcher.MockFetcher{}, // Keep mock for testing
 		remotive.NewClient(),
 		adzuna.NewAPIClient(),
+		weworkremotely.NewClient(),
 	}
 
 	// 5. Initialize Job Service

@@ -23,7 +23,7 @@ func NewPostgresJobRepository(pool *pgxpool.Pool) *PostgresJobRepository {
 }
 
 func (r *PostgresJobRepository) Save(ctx context.Context, job *domain.Job) error {
-	_, err := r.db.Exec(ctx, "INSERT INTO jobs (id, source_id, platform, title, company, location, category, description, url, salary, posted_at, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) ON CONFLICT (id) DO NOTHING", job.ID, job.SourceID, job.Platform, job.Title, job.Company, job.Location, job.Category, job.Description, job.URL, job.Salary, job.PostedAt, job.CreatedAt)
+	_, err := r.db.Exec(ctx, "INSERT INTO jobs (id, source_id, platform, title, company, location, category, description, url, salary, posted_at, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) ON CONFLICT (source_id, platform) DO NOTHING", job.ID, job.SourceID, job.Platform, job.Title, job.Company, job.Location, job.Category, job.Description, job.URL, job.Salary, job.PostedAt, job.CreatedAt)
 	if err != nil {
 		return err
 	}
@@ -61,7 +61,6 @@ func (r *PostgresJobRepository) FindAll(
 	conditions := []string{}
 	args := []interface{}{}
 	paramIdx := 1
-	
 
 	// =========================
 	// Keyword Search
