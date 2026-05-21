@@ -28,7 +28,7 @@
         <span class="text-blue-600">All in One Stream.</span>
       </h1>
       <p class="text-xl text-gray-600 dark:text-gray-400 mb-10 max-w-2xl mx-auto">
-        Aggregate job listings from LinkedIn, Indeed, Glassdoor and more. 
+        Aggregate job listings from Remotive, Adzuna, and more. 
         Filter, search, and apply from a single, fast interface.
       </p>
       
