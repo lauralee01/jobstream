@@ -23,6 +23,7 @@ func NewRouter(jobService *jobs.JobService) http.Handler {
 	mux.HandleFunc("/api/v1/jobs/sync", jobHandler.SyncJobs)
 	mux.HandleFunc("GET /api/v1/jobs", jobHandler.GetJobs)
 	mux.HandleFunc("GET /api/v1/jobs/categories", jobHandler.GetCategories)
+	mux.HandleFunc("GET /api/v1/jobs/platforms", jobHandler.GetPlatforms)
 
 	return corsMiddleware(mux)
 }

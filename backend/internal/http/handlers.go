@@ -50,6 +50,20 @@ func (h *JobHandler) GetCategories(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// GetPlatforms returns a distinct list of non-empty job sources/platforms.
+func (h *JobHandler) GetPlatforms(w http.ResponseWriter, r *http.Request) {
+	platforms, err := h.service.GetPlatforms(r.Context())
+	if err != nil {
+		http.Error(w, "Failed to get platforms", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(platforms); err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+	}
+}
+
 // GetJobs fetches all jobs and returns them as JSON.
 func (h *JobHandler) GetJobs(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()

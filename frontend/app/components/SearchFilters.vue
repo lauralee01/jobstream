@@ -15,16 +15,17 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'search'])
 
-const platforms = [
-  { id: 'linkedin', name: 'LinkedIn' },
-  { id: 'indeed', name: 'Indeed' },
-  { id: 'glassdoor', name: 'Glassdoor' },
-  { id: 'handshake', name: 'Handshake' }
-]
-
-const { fetchCategories } = useJobs()
+const { fetchCategories, fetchPlatforms } = useJobs()
 const { data: fetchedCategories } = await fetchCategories()
 const categories = computed(() => fetchedCategories.value || [])
+
+const { data: fetchedPlatforms } = await fetchPlatforms()
+const platforms = computed(() => {
+  return (fetchedPlatforms.value || []).map(p => ({
+    id: p,
+    name: p
+  }))
+})
 
 const filters = ref({ ...props.modelValue })
 

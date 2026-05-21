@@ -69,3 +69,8 @@ func (s *JobService) GetJobs(ctx context.Context, filter domain.JobFilter) ([]do
 func (s *JobService) GetCategories(ctx context.Context) ([]string, error) {
 	return s.repo.GetCategories(ctx)
 }
+
+// GetPlatforms returns all unique job platforms (sources).
+func (s *JobService) GetPlatforms(ctx context.Context) ([]string, error) {
+	return s.repo.GetPlatforms(ctx)
+}

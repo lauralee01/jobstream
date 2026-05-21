@@ -79,9 +79,20 @@ export const useJobs = () => {
     })
   }
 
+  // =========================================
+  // Fetch Platforms
+  // =========================================
+
+  const fetchPlatforms = () => {
+    return useFetch(`${API_BASE}/jobs/platforms`, {
+      key: 'platforms'
+    })
+  }
+
   return {
     fetchJobs,
     syncJobs,
-    fetchCategories
+    fetchCategories,
+    fetchPlatforms
   }
 }

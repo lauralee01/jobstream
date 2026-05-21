@@ -51,6 +51,7 @@ type JobRepository interface {
 	Save(ctx context.Context, job *Job) error
 	FindAll(ctx context.Context, filter JobFilter) ([]Job, int64, error)
 	GetCategories(ctx context.Context) ([]string, error)
+	GetPlatforms(ctx context.Context) ([]string, error)
 }
 
 type JobsResponse struct {

@@ -308,3 +308,32 @@ func (r *PostgresJobRepository) GetCategories(ctx context.Context) ([]string, er
 
 	return categories, nil
 }
+
+func (r *PostgresJobRepository) GetPlatforms(ctx context.Context) ([]string, error) {
+	query := `
+		SELECT DISTINCT platform 
+		FROM jobs 
+		WHERE platform IS NOT NULL AND platform != '' 
+		ORDER BY platform ASC
+	`
+	rows, err := r.db.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var platforms []string
+	for rows.Next() {
+		var platform string
+		if err := rows.Scan(&platform); err != nil {
+			return nil, err
+		}
+		platforms = append(platforms, platform)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return platforms, nil
+}
