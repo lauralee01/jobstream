@@ -99,9 +99,9 @@ const handleSync = async () => {
             </svg>
             {{ isSyncing ? 'Syncing...' : 'Sync Jobs' }}
           </button>
-          <button class="bg-gray-900 dark:bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-gray-800 dark:hover:bg-blue-700 transition-colors">
+          <!-- <button class="bg-gray-900 dark:bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-gray-800 dark:hover:bg-blue-700 transition-colors">
             Sign In
-          </button>
+          </button> -->
         </div>
       </div>
     </header>
@@ -149,12 +149,12 @@ const handleSync = async () => {
                 class="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               />
             </div>
-            <button 
+            <!-- <button 
               @click="handleSearch"
               class="bg-blue-600 text-white px-8 py-2.5 rounded-lg font-bold hover:bg-blue-700 transition-all active:scale-[0.98] shadow-lg shadow-blue-200 dark:shadow-none"
             >
               Search
-            </button>
+            </button> -->
           </div>
 
           <!-- Loading/Error States -->
