@@ -120,6 +120,19 @@ func (r *PostgresJobRepository) FindAll(
 	}
 
 	// =========================
+	// Remote Only Filter
+	// =========================
+
+	if filter.IsRemote != nil && *filter.IsRemote {
+		conditions = append(
+			conditions,
+			fmt.Sprintf("(platform IN ('WeWorkRemotely', 'Remotive') OR location ILIKE $%d)", paramIdx),
+		)
+		args = append(args, "%remote%")
+		paramIdx++
+	}
+
+	// =========================
 	// Platform Filter
 	// =========================
 

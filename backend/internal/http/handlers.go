@@ -108,6 +108,18 @@ func (h *JobHandler) GetJobs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// =========================
+	// Parse remote only
+	// =========================
+
+	var isRemote *bool
+	if rVal := query.Get("remote"); rVal != "" {
+		parsedBool, err := strconv.ParseBool(rVal)
+		if err == nil {
+			isRemote = &parsedBool
+		}
+	}
+
+	// =========================
 	// Build filter
 	// =========================
 
@@ -116,6 +128,7 @@ func (h *JobHandler) GetJobs(w http.ResponseWriter, r *http.Request) {
 		Location:  query.Get("location"),
 		Category:  query.Get("category"),
 		Platforms: platforms,
+		IsRemote:  isRemote,
 		Page:      page,
 		Limit:     limit,
 		SortBy:    "created_at",

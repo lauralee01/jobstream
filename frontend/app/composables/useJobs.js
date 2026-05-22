@@ -18,6 +18,7 @@ export const useJobs = () => {
         params.value.platforms?.length
           ? params.value.platforms.join(',')
           : undefined,
+      remote: params.value.remote ? 'true' : undefined,
       page: params.value.page || 1,
       limit: 20
     }))
