@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"jobstream/internal/domain"
-	"log"
 	"net/http"
 	"time"
 )
@@ -103,8 +102,6 @@ func (c *Client) Fetch(
 			job.toDomain(c.company),
 		)
 	}
-
-	log.Println("Fetched %d jobs from %s", len(jobs), jobs)
 
 	return jobs, nil
 }

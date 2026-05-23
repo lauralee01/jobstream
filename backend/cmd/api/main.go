@@ -39,18 +39,43 @@ func main() {
 	}
 	defer pool.Close()
 
-	// 3. Initialize Repository
+	// 3. Initialize Job Repository
 	repo := db.NewPostgresJobRepository(pool)
 
-	// 4. Register fetchers
+	// 4. Initialize Company Repository
+	companyRepo := db.NewPostgresCompanyRepository(pool)
+
+	// 5. Fetch all Greenhouse companies
+	greenhouseCompanies, err := companyRepo.GetEnabledByProvider(
+		context.Background(),
+		"greenhouse",
+	)
+
+	if err != nil {
+		log.Fatalf(
+			"failed to load greenhouse companies: %v",
+			err,
+		)
+	}
+
+	// 5. Initialize Fetchers
 	fetchers := []fetcher.Fetcher{
 		remotive.NewClient(),
 		adzuna.NewAPIClient(),
 		weworkremotely.NewClient(),
-		greenhouse.NewClient("stripe"),
-		greenhouse.NewClient("vercel"),
-		greenhouse.NewClient("notion"),
-		greenhouse.NewClient("discord"),
+	}
+
+	for _, company := range greenhouseCompanies {
+
+		log.Printf(
+			"Registering Greenhouse fetcher for: %s",
+			company.Slug,
+		)
+
+		fetchers = append(
+			fetchers,
+			greenhouse.NewClient(company.Slug),
+		)
 	}
 
 	// 5. Initialize Job Service
