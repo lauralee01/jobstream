@@ -47,7 +47,6 @@ func main() {
 		remotive.NewClient(),
 		adzuna.NewAPIClient(),
 		weworkremotely.NewClient(),
-		greenhouse.NewClient("openai"),
 		greenhouse.NewClient("stripe"),
 		greenhouse.NewClient("vercel"),
 		greenhouse.NewClient("notion"),
