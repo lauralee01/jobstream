@@ -43,7 +43,6 @@ func main() {
 
 	// 4. Register fetchers
 	fetchers := []fetcher.Fetcher{
-		&fetcher.MockFetcher{}, // Keep mock for testing
 		remotive.NewClient(),
 		adzuna.NewAPIClient(),
 		weworkremotely.NewClient(),
