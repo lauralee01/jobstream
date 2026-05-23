@@ -75,6 +75,15 @@ func (c *Client) Fetch(ctx context.Context) ([]domain.Job, error) {
 		)
 	}
 
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode == http.StatusNotFound {
+		log.Printf("WeWorkRemotely board not found: %s", c.baseURL)
+		return nil, fmt.Errorf("WeWorkRemotely board not found: %s", c.baseURL)
+	}
+
 	defer resp.Body.Close()
 
 	// Validate response

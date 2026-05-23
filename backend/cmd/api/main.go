@@ -10,6 +10,7 @@ import (
 	"jobstream/internal/db"
 	"jobstream/internal/fetcher"
 	"jobstream/internal/fetcher/adzuna"
+	"jobstream/internal/fetcher/greenhouse"
 	"jobstream/internal/fetcher/remotive"
 	"jobstream/internal/fetcher/weworkremotely"
 	"jobstream/internal/jobs"
@@ -46,6 +47,11 @@ func main() {
 		remotive.NewClient(),
 		adzuna.NewAPIClient(),
 		weworkremotely.NewClient(),
+		greenhouse.NewClient("openai"),
+		greenhouse.NewClient("stripe"),
+		greenhouse.NewClient("vercel"),
+		greenhouse.NewClient("notion"),
+		greenhouse.NewClient("discord"),
 	}
 
 	// 5. Initialize Job Service
