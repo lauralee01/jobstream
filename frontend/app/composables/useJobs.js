@@ -1,8 +1,9 @@
 export const useJobs = () => {
   const config = useRuntimeConfig()
 
-  const API_BASE =
-    config.public.apiBase || 'http://localhost:8080/api/v1'
+  console.log('config', config.public.apiBase)
+
+  const API_BASE = config.public.apiBase
 
   // =========================================
   // Fetch Jobs
