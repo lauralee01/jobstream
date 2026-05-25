@@ -2,13 +2,21 @@ package greenhouse
 
 import (
 	"fmt"
+	"jobstream/internal/category"
 	"jobstream/internal/domain"
+	"log"
 	"time"
 )
 
 // APIResponse represents Greenhouse API response
 type APIResponse struct {
 	Jobs []GreenhouseJob `json:"jobs"`
+}
+
+// GreenhouseDepartment represents a department within a Greenhouse job
+type GreenhouseDepartment struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
 }
 
 // GreenhouseJob represents a job posting
@@ -21,9 +29,10 @@ type GreenhouseJob struct {
 		Name string `json:"name"`
 	} `json:"location"`
 
-	Description     string    `json:"description"`
-	UpdatedAt       time.Time `json:"updated_at"`
-	PublicationDate string    `json:"publication_date"`
+	Departments     []GreenhouseDepartment `json:"departments"`
+	Description     string                 `json:"description"`
+	UpdatedAt       time.Time              `json:"updated_at"`
+	PublicationDate string                 `json:"publication_date"`
 }
 
 // toDomain maps Greenhouse job to domain entity
@@ -33,7 +42,13 @@ func (j *GreenhouseJob) toDomain(company string) domain.Job {
 		postedAt = time.Now()
 	}
 
-	category := ""
+	log.Println("Found job:", j.Title)
+
+	jobCategory := category.Infer(j.Title)
+
+	if len(j.Departments) > 0 {
+		jobCategory = j.Departments[0].Name
+	}
 
 	return domain.Job{
 		ID:          fmt.Sprintf("greenhouse-%s", fmt.Sprintf("%d", j.ID)),
@@ -41,7 +56,7 @@ func (j *GreenhouseJob) toDomain(company string) domain.Job {
 		Title:       j.Title,
 		Company:     company,
 		Location:    j.Location.Name,
-		Category:    category,
+		Category:    jobCategory,
 		Description: j.Description,
 		URL:         j.AbsoluteURL,
 		PostedAt:    postedAt,
