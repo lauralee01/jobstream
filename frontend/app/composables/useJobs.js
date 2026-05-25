@@ -1,8 +1,6 @@
 export const useJobs = () => {
   const config = useRuntimeConfig()
 
-  console.log('config', config.public.apiBase)
-
   const API_BASE = config.public.apiBase
 
   // =========================================
