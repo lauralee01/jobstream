@@ -80,7 +80,8 @@ func (c *Client) Fetch(
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf(
-			"unexpected status code: %d",
+			"failed to fetch jobs for company %s: unexpected status code: %d",
+			c.company,
 			resp.StatusCode,
 		)
 	}

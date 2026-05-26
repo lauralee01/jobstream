@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"jobstream/internal/category"
 	"jobstream/internal/domain"
-	"log"
 	"time"
 )
 
@@ -41,8 +40,6 @@ func (j *GreenhouseJob) toDomain(company string) domain.Job {
 	if err != nil {
 		postedAt = time.Now()
 	}
-
-	log.Println("Found job:", j.Title)
 
 	jobCategory := category.Infer(j.Title)
 
