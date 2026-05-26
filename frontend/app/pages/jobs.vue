@@ -80,9 +80,9 @@ const handleSync = async () => {
     <header class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-50 transition-colors duration-300">
       <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         <div class="flex items-center gap-8">
-          <NuxtLink to="/" class="text-2xl font-black text-blue-600 tracking-tight">JobStream</NuxtLink>
+          <NuxtLink to="/" class="text-2xl font-black text-gray-900 dark:text-white tracking-tight">JobStream</NuxtLink>
           <nav class="hidden md:flex items-center gap-6">
-            <NuxtLink to="/jobs" class="text-gray-900 dark:text-white font-semibold border-b-2 border-blue-600 pb-1">Browse Jobs</NuxtLink>
+            <NuxtLink to="/jobs" class="text-gray-900 dark:text-white font-semibold border-b-2 border-gray-900 dark:border-gray-700 pb-1">Browse Jobs</NuxtLink>
             <NuxtLink to="#" class="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Companies</NuxtLink>
             <NuxtLink to="#" class="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Salaries</NuxtLink>
           </nav>
@@ -256,6 +256,6 @@ const handleSync = async () => {
 
 <style scoped>
 .router-link-active {
-  @apply text-blue-600 border-blue-600;
+  @apply text-gray-900 dark:text-white border-gray-900 dark:border-white;
 }
 </style>

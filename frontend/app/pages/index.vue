@@ -17,12 +17,12 @@ const platforms = computed(() => {
     <!-- Simple Hero Section -->
     <header class="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 transition-colors duration-300">
       <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-        <NuxtLink to="/" class="text-2xl font-black text-blue-600 tracking-tight">JobStream</NuxtLink>
+        <NuxtLink to="/" class="text-2xl font-black text-gray-900 dark:text-white tracking-tight">JobStream</NuxtLink>
         <div class="flex items-center gap-4">
           <ColorModeToggle />
           <NuxtLink 
             to="/jobs" 
-            class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 dark:shadow-none"
+            class="bg-gray-900 dark:bg-gray-700 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 dark:shadow-none"
           >
             Find Jobs
           </NuxtLink>

@@ -64,7 +64,7 @@ const clearFilters = () => {
       <h2 class="text-lg font-bold text-gray-900 dark:text-white">Filters</h2>
       <button 
         @click="clearFilters"
-        class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium transition-colors"
+        class="text-sm text-gray-900 dark:text-white hover:text-blue-800 dark:hover:text-blue-300 font-medium transition-colors"
       >
         Clear all
       </button>
@@ -129,7 +129,7 @@ const clearFilters = () => {
 
     <button 
       @click="$emit('search')"
-      class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 dark:shadow-none active:scale-[0.98]"
+      class="w-full bg-gray-900 dark:bg-gray-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 dark:shadow-none active:scale-[0.98]"
     >
       Apply Filters
     </button>

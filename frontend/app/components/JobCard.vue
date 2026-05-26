@@ -41,20 +41,20 @@ const getPlatformStyle = (platform) => {
         </span>
         <span class="text-xs text-gray-500 dark:text-gray-400">{{ formatDate(job.posted_at) }}</span>
       </div>
-      <button class="text-gray-400 hover:text-blue-600 transition-colors">
+      <button class="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
         </svg>
       </button>
     </div>
-
+ 
     <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-1 transition-colors">
       {{ job.title }}
     </h3>
-    <p class="text-lg text-blue-600 dark:text-blue-400 font-medium mb-3">
+    <p class="text-lg text-gray-600 dark:text-gray-300 font-semibold mb-3">
       {{ job.company }}
     </p>
-
+ 
     <div class="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400 mb-6 transition-colors">
       <div class="flex items-center gap-1">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -70,12 +70,12 @@ const getPlatformStyle = (platform) => {
         {{ job.salary }}
       </div>
     </div>
-
+ 
     <div class="flex justify-between items-center mt-auto">
       <a 
         :href="job.url" 
         target="_blank"
-        class="bg-blue-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-blue-700 transition-all inline-flex items-center gap-2 shadow-lg shadow-blue-200 dark:shadow-none"
+        class="bg-gray-900 dark:bg-gray-700 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-gray-800 dark:hover:bg-gray-600 transition-all inline-flex items-center gap-2 shadow-lg shadow-gray-200 dark:shadow-none"
       >
         View Details
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
