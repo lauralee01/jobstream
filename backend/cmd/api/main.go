@@ -11,6 +11,7 @@ import (
 	"jobstream/internal/fetcher"
 	"jobstream/internal/fetcher/adzuna"
 	"jobstream/internal/fetcher/greenhouse"
+	"jobstream/internal/fetcher/lever"
 	"jobstream/internal/fetcher/remotive"
 	"jobstream/internal/fetcher/weworkremotely"
 	"jobstream/internal/jobs"
@@ -51,9 +52,23 @@ func main() {
 		"greenhouse",
 	)
 
+	// Fetch all Lever companies
+
+	leverCompanies, err := companyRepo.GetEnabledByProvider(
+		context.Background(),
+		"lever",
+	)
+
 	if err != nil {
 		log.Fatalf(
 			"failed to load greenhouse companies: %v",
+			err,
+		)
+	}
+
+	if err != nil {
+		log.Fatalf(
+			"failed to load lever companies: %v",
 			err,
 		)
 	}
@@ -75,6 +90,19 @@ func main() {
 		fetchers = append(
 			fetchers,
 			greenhouse.NewClient(company.Slug),
+		)
+	}
+
+	for _, company := range leverCompanies {
+
+		log.Printf(
+			"Registering Lever fetcher for: %s",
+			company.Slug,
+		)
+
+		fetchers = append(
+			fetchers,
+			lever.NewClient(company.Slug),
 		)
 	}
 
