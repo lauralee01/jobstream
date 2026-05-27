@@ -122,7 +122,12 @@ func (r *PostgresJobRepository) FindAll(
 						'([0-9][0-9,]*(\.[0-9]+)?)[[:space:]]*([kKmM])?'
 					) AS salary_parts(parts)
 				WHERE (
-					REPLACE(parts[1], ',', '')::numeric *
+					CASE
+						-- Treat values like "31,2k" as decimal notation (31.2k), not 312k.
+						WHEN parts[1] ~ '^[0-9]+,[0-9]{1,2}$' THEN REPLACE(parts[1], ',', '.')::numeric
+						-- Otherwise commas are thousands separators.
+						ELSE REPLACE(parts[1], ',', '')::numeric
+					END *
 					CASE LOWER(COALESCE(parts[3], ''))
 						WHEN 'k' THEN 1000
 						WHEN 'm' THEN 1000000

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"jobstream/internal/domain"
 	"jobstream/internal/jobs"
-	"log"
 	"math"
 	"net/http"
 	"strconv"
@@ -145,8 +144,6 @@ func (h *JobHandler) GetJobs(w http.ResponseWriter, r *http.Request) {
 		SortBy:    "created_at",
 		SortOrder: "desc",
 	}
-
-	log.Printf("Filter: %v", filter)
 
 	// =========================
 	// Fetch jobs
