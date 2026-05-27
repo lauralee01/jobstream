@@ -74,6 +74,8 @@ const handleSync = async () => {
   isSyncing.value = true
   await syncJobs()
   isSyncing.value = false
+  // Sync can introduce new platforms/categories; refresh cached fetches.
+  await refreshNuxtData(['platforms', 'categories'])
   // Refresh the list after sync
   refresh()
 }
