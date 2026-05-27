@@ -3,64 +3,69 @@ const { fetchJobs, syncJobs } = useJobs()
 const route = useRoute()
 const router = useRouter()
 
-// Filters state initialized from URL query
-const searchParams = ref({
-  keyword: route.query.q || '',
-  location: route.query.location || '',
-  category: route.query.category || '',
-  platforms: route.query.platforms ? route.query.platforms.split(',') : [],
-  remote: route.query.work_model === 'remote',
-  salaryMin: route.query.salary_min || '',
-  page: parseInt(route.query.page) || 1
+const filtersFromQuery = (query) => ({
+  keyword: query.q || '',
+  location: query.location || '',
+  category: query.category || '',
+  platforms: query.platforms ? query.platforms.split(',') : [],
+  remote: query.work_model === 'remote',
+  salaryMin: query.salary_min || query.min_salary || '',
+  page: parseInt(query.page) || 1
 })
+
+const queryFromFilters = (filters) => ({
+  q: filters.keyword || undefined,
+  location: filters.location || undefined,
+  category: filters.category || undefined,
+  platforms: filters.platforms?.length ? filters.platforms.join(',') : undefined,
+  work_model: filters.remote ? 'remote' : undefined,
+  min_salary: filters.salaryMin || undefined,
+  page: filters.page > 1 ? filters.page : undefined
+})
+
+// Filters state initialized from URL query
+const searchParams = ref(filtersFromQuery(route.query))
+const appliedParams = ref({ ...searchParams.value })
 
 watch(
   () => route.query,
   (query) => {
-    searchParams.value = {
-      keyword: query.q || '',
-      location: query.location || '',
-      category: query.category || '',
-      platforms: query.platforms
-        ? query.platforms.split(',')
-        : [],
-      remote: query.work_model === 'remote',
-      salaryMin: query.salary_min || '',
-      page: parseInt(query.page) || 1
-    }
+    const nextParams = filtersFromQuery(query)
+    searchParams.value = { ...nextParams }
+    appliedParams.value = { ...nextParams }
   },
   { immediate: true }
 )
 
 // Computed jobs and metadata from the composable
-const { jobs, metadata, pending, error, refresh } = fetchJobs(searchParams)
+const { jobs, metadata, pending, error, refresh } = fetchJobs(appliedParams)
 
 // Handle search trigger
-const handleSearch = () => {
+const handleSearch = (filters = searchParams.value) => {
   // Reset to page 1 on new search
-  searchParams.value.page = 1
-  updateUrlAndFetch()
+  const nextParams = {
+    ...filters,
+    page: 1
+  }
+  searchParams.value = { ...nextParams }
+  appliedParams.value = { ...nextParams }
+  updateUrl(nextParams)
 }
 
 // Handle pagination
 const changePage = (newPage) => {
-  searchParams.value.page = newPage
-  updateUrlAndFetch()
+  const nextParams = {
+    ...appliedParams.value,
+    page: newPage
+  }
+  searchParams.value = { ...nextParams }
+  appliedParams.value = { ...nextParams }
+  updateUrl(nextParams)
 }
 
-// Update URL to make the search state shareable and re-fetch
-const updateUrlAndFetch = async () => {
-  const query = {
-    q: searchParams.value.keyword || undefined,
-    location: searchParams.value.location || undefined,
-    category: searchParams.value.category || undefined,
-    platforms: searchParams.value.platforms?.length ? searchParams.value.platforms.join(',') : undefined,
-    work_model: searchParams.value.remote ? 'remote' : undefined,
-    salary_min: searchParams.value.salaryMin || undefined,
-    page: searchParams.value.page > 1 ? searchParams.value.page : undefined
-  }
-  
-  await router.replace({ query })
+// Update URL to make the applied search state shareable
+const updateUrl = async (filters) => {
+  await router.replace({ query: queryFromFilters(filters) })
 }
 
 // Sync jobs helper

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"jobstream/internal/domain"
 	"jobstream/internal/jobs"
+	"log"
 	"math"
 	"net/http"
 	"strconv"
@@ -72,7 +73,7 @@ func (h *JobHandler) GetJobs(w http.ResponseWriter, r *http.Request) {
 	// Parse platforms
 	// =========================
 
-	platforms := []string{}	
+	platforms := []string{}
 
 	if query.Get("platforms") != "" {
 		platforms = strings.Split(
@@ -123,10 +124,20 @@ func (h *JobHandler) GetJobs(w http.ResponseWriter, r *http.Request) {
 	// Build filter
 	// =========================
 
+	var minSalary *int
+
+	if sVal := query.Get("min_salary"); sVal != "" {
+		parsedInt, err := strconv.Atoi(sVal)
+		if err == nil {
+			minSalary = &parsedInt
+		}
+	}
+
 	filter := domain.JobFilter{
 		Keyword:   query.Get("keyword"),
 		Location:  query.Get("location"),
 		Category:  query.Get("category"),
+		MinSalary: minSalary,
 		Platforms: platforms,
 		IsRemote:  isRemote,
 		Page:      page,
@@ -134,6 +145,8 @@ func (h *JobHandler) GetJobs(w http.ResponseWriter, r *http.Request) {
 		SortBy:    "created_at",
 		SortOrder: "desc",
 	}
+
+	log.Printf("Filter: %v", filter)
 
 	// =========================
 	// Fetch jobs

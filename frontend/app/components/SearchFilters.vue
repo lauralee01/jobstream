@@ -36,12 +36,11 @@ watch(() => props.modelValue, (newVal) => {
   }
 }, { deep: true })
 
-// Emit changes
-watch(filters, (newVal) => {
-  if (JSON.stringify(newVal) !== JSON.stringify(props.modelValue)) {
-    emit('update:modelValue', newVal)
-  }
-}, { deep: true })
+const applyFilters = () => {
+  const applied = { ...filters.value }
+  emit('update:modelValue', applied)
+  emit('search', applied)
+}
 
 const clearFilters = () => {
   const cleared = {
@@ -54,7 +53,7 @@ const clearFilters = () => {
   }
   filters.value = cleared
   emit('update:modelValue', cleared)
-  emit('search')
+  emit('search', cleared)
 }
 </script>
 
@@ -128,7 +127,7 @@ const clearFilters = () => {
     </div>
 
     <button 
-      @click="$emit('search')"
+      @click="applyFilters"
       class="w-full bg-gray-900 dark:bg-gray-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 dark:shadow-none active:scale-[0.98]"
     >
       Apply Filters

@@ -13,6 +13,9 @@ export const useJobs = () => {
       keyword: params.value.keyword || undefined,
       location: params.value.location || undefined,
       category: params.value.category || undefined,
+      // Primary key used by the current filters UI is `salaryMin`.
+      // Keep `minSalary` as fallback for backwards compatibility.
+      min_salary: params.value.salaryMin || params.value.minSalary || undefined,
       platforms:
         params.value.platforms?.length
           ? params.value.platforms.join(',')

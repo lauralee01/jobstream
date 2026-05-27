@@ -27,6 +27,7 @@ type JobFilter struct {
 	Keyword   string
 	Location  string
 	Category  string
+	MinSalary *int
 	Platforms []string
 
 	IsRemote *bool

@@ -105,6 +105,39 @@ func (r *PostgresJobRepository) FindAll(
 	}
 
 	// =========================
+	// Min Salary Filter
+	// =========================
+
+	if filter.MinSalary != nil {
+
+		conditions = append(
+			conditions,
+			fmt.Sprintf(`
+			salary IS NOT NULL
+			AND salary != ''
+			AND EXISTS (
+				SELECT 1
+				FROM regexp_matches(
+						salary,
+						'([0-9][0-9,]*(\.[0-9]+)?)[[:space:]]*([kKmM])?'
+					) AS salary_parts(parts)
+				WHERE (
+					REPLACE(parts[1], ',', '')::numeric *
+					CASE LOWER(COALESCE(parts[3], ''))
+						WHEN 'k' THEN 1000
+						WHEN 'm' THEN 1000000
+						ELSE 1
+					END
+				) >= $%d
+			)
+		`, paramIdx),
+		)
+
+		args = append(args, *filter.MinSalary)
+		paramIdx++
+	}
+
+	// =========================
 	// Location Filter
 	// =========================
 
