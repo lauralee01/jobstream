@@ -3,6 +3,7 @@ package weworkremotely
 import (
 	"context"
 	"fmt"
+	"jobstream/internal/category"
 	"jobstream/internal/domain"
 	"log"
 	"net/http"
@@ -110,7 +111,7 @@ func (c *Client) Fetch(ctx context.Context) ([]domain.Job, error) {
 		title := strings.TrimSpace(s.Find("span.title").Text())
 		company := strings.TrimSpace(s.Find("span.company").Text())
 		location := strings.TrimSpace(s.Find("span.region").Text())
-		category := strings.TrimSpace(s.Find("span.company").Parent().Parent().Find("h2").Text())
+		rawCategory := strings.TrimSpace(s.Find("span.company").Parent().Parent().Find("h2").Text())
 
 		// Extract URL
 		href, exists := s.Find("a").Attr("href")
@@ -129,7 +130,7 @@ func (c *Client) Fetch(ctx context.Context) ([]domain.Job, error) {
 			Location: location,
 			URL:      url,
 			PostedAt: postedAt,
-			Category: category,
+			Category: category.Normalize(rawCategory, title),
 		}
 
 		log.Printf("Job: %v", job)

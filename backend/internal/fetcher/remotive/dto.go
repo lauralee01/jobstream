@@ -3,6 +3,7 @@ package remotive
 import (
 	"fmt"
 	"html"
+	"jobstream/internal/category"
 	"jobstream/internal/domain"
 	"regexp"
 	"strconv"
@@ -57,7 +58,7 @@ func (r *RemotiveJob) toDomain() domain.Job {
 		Title:       r.Title,
 		Company:     r.CompanyName,
 		Location:    r.CandidateRequiredLocation,
-		Category:    parseCategoryFromURL(r.Category, r.URL),
+		Category:    category.Normalize(parseCategoryFromURL(r.Category, r.URL), r.Title),
 		Description: stripHTML(r.Description),
 		URL:         r.URL,
 		Salary:      r.Salary,

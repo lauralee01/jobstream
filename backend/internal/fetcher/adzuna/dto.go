@@ -2,6 +2,7 @@ package adzuna
 
 import (
 	"fmt"
+	"jobstream/internal/category"
 	"jobstream/internal/domain"
 	"strings"
 	"time"
@@ -41,7 +42,7 @@ func (aj AdzunaJob) ToJob() domain.Job {
 		Title:          aj.Title,
 		Company:        aj.Company.DisplayName,
 		Location:       strings.Join(aj.Location.Area, ", "),
-		Category:       aj.Category.Label,
+		Category:       category.Normalize(aj.Category.Label, aj.Title),
 		Description:    aj.Description,
 		URL:            aj.URL,
 		Salary:         aj.Salary,

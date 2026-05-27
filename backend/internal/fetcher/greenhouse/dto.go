@@ -41,11 +41,11 @@ func (j *GreenhouseJob) toDomain(company string) domain.Job {
 		postedAt = time.Now()
 	}
 
-	jobCategory := category.Infer(j.Title)
-
+	rawCategory := ""
 	if len(j.Departments) > 0 {
-		jobCategory = j.Departments[0].Name
+		rawCategory = j.Departments[0].Name
 	}
+	jobCategory := category.Normalize(rawCategory, j.Title)
 
 	return domain.Job{
 		ID:          fmt.Sprintf("greenhouse-%s", fmt.Sprintf("%d", j.ID)),

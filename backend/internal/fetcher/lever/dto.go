@@ -26,11 +26,7 @@ func (j *LeverJob) toDomain(company string) domain.Job {
 
 	postedAt := time.UnixMilli(j.CreatedAt)
 
-	jobCategory := j.Categories.Team
-
-	if jobCategory == "" {
-		jobCategory = category.Infer(j.Text)
-	}
+	jobCategory := category.Normalize(j.Categories.Team, j.Text)
 
 	return domain.Job{
 		ID:          fmt.Sprintf("lever-%s", j.ID),

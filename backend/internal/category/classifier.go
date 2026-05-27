@@ -2,21 +2,104 @@ package category
 
 import "strings"
 
-// Infer attempts to determine a normalized category
-// from a job title.
-func Infer(title string) string {
+type categoryRule struct {
+	name     string
+	keywords []string
+}
 
-	title = strings.ToLower(title)
+// Ordered rules make classification deterministic across runs.
+var categoryRules = []categoryRule{
+	{name: "Engineering", keywords: []string{"engineer", "developer", "software", "backend", "frontend", "full stack", "devops", "platform", "sre", "mobile", "ios", "android"}},
+	{name: "Data", keywords: []string{"data", "analytics", "scientist", "machine learning", "ml", "ai"}},
+	{name: "Product", keywords: []string{"product manager", "product owner", "product"}},
+	{name: "Design", keywords: []string{"designer", "ux", "ui", "product design", "visual design"}},
+	{name: "Marketing", keywords: []string{"marketing", "growth", "seo", "content", "brand"}},
+	{name: "Sales", keywords: []string{"sales", "account executive", "business development"}},
+	{name: "People", keywords: []string{"recruiter", "talent", "people operations", "human resources", "hr"}},
+	{name: "Finance", keywords: []string{"finance", "accounting", "financial"}},
+	{name: "Security", keywords: []string{"security", "cybersecurity", "infosec", "application security"}},
+	{name: "Operations", keywords: []string{"operations", "program manager", "technical program manager"}},
+	{name: "Customer Success", keywords: []string{"customer success", "support", "customer support", "success manager"}},
+	{name: "Legal", keywords: []string{"legal", "counsel", "paralegal", "compliance"}},
+}
 
-	for category, keywords := range categoryKeywords {
+var normalizedAliases = map[string]string{
+	"engineering": "Engineering",
+	"eng":         "Engineering",
+	"developer":   "Engineering",
+	"software":    "Engineering",
+	"technology":  "Engineering",
 
-		for _, keyword := range keywords {
+	"data":      "Data",
+	"analytics": "Data",
 
-			if strings.Contains(title, keyword) {
-				return category
+	"product": "Product",
+
+	"design": "Design",
+
+	"marketing": "Marketing",
+	"growth":    "Marketing",
+
+	"sales":               "Sales",
+	"business development": "Sales",
+
+	"hr":              "People",
+	"people":          "People",
+	"people ops":      "People",
+	"human resources": "People",
+	"recruiting":      "People",
+
+	"finance":    "Finance",
+	"accounting": "Finance",
+
+	"security": "Security",
+
+	"operations": "Operations",
+	"ops":        "Operations",
+
+	"customer success": "Customer Success",
+	"support":          "Customer Success",
+
+	"legal":      "Legal",
+	"compliance": "Legal",
+}
+
+func inferFromText(text string) string {
+	text = strings.ToLower(strings.TrimSpace(text))
+	if text == "" {
+		return "Other"
+	}
+
+	for _, rule := range categoryRules {
+		for _, keyword := range rule.keywords {
+			if strings.Contains(text, keyword) {
+				return rule.name
 			}
 		}
 	}
 
 	return "Other"
+}
+
+// Infer attempts to determine a normalized category
+// from a job title.
+func Infer(title string) string {
+	return inferFromText(title)
+}
+
+// Normalize first tries to map source-provided categories to canonical values.
+// If that fails, it falls back to text inference.
+func Normalize(rawCategory string, fallbackText string) string {
+	normalized := strings.ToLower(strings.TrimSpace(rawCategory))
+	if normalized != "" {
+		if mapped, ok := normalizedAliases[normalized]; ok {
+			return mapped
+		}
+
+		if inferred := inferFromText(normalized); inferred != "Other" {
+			return inferred
+		}
+	}
+
+	return inferFromText(fallbackText)
 }
