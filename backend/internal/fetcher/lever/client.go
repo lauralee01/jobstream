@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"jobstream/internal/domain"
+	"net"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -21,7 +23,7 @@ func NewClient(company string) *Client {
 
 	return &Client{
 		httpClient: &http.Client{
-			Timeout: 10 * time.Second,
+			Timeout: 30 * time.Second,
 		},
 		company: company,
 		baseURL: fmt.Sprintf(
@@ -38,70 +40,62 @@ func (c *Client) Name() string {
 func (c *Client) Fetch(
 	ctx context.Context,
 ) ([]domain.Job, error) {
+	var lastErr error
 
-	req, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodGet,
-		c.baseURL,
-		nil,
-	)
+	for attempt := 0; attempt < 3; attempt++ {
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create request: %w", err)
+		}
 
-	if err != nil {
-		return nil, fmt.Errorf(
-			"failed to create request: %w",
-			err,
-		)
+		req.Header.Set("User-Agent", "JobStream/1.0")
+		req.Header.Set("Accept", "application/json")
+
+		resp, err := c.httpClient.Do(req)
+		if err != nil {
+			lastErr = err
+
+			// Retry common transient failures (timeouts / temporary network errors).
+			if uerr, ok := err.(*url.Error); ok {
+				if nerr, ok := uerr.Err.(net.Error); ok && (nerr.Timeout() || nerr.Temporary()) {
+					time.Sleep(time.Duration(500+attempt*1000) * time.Millisecond)
+					continue
+				}
+			}
+
+			// Handle cases where the underlying error is a net.Error directly.
+			if nerr, ok := err.(net.Error); ok && (nerr.Timeout() || nerr.Temporary()) {
+				time.Sleep(time.Duration(500+attempt*1000) * time.Millisecond)
+				continue
+			}
+
+			return nil, fmt.Errorf("http request failed: %w", err)
+		}
+		defer resp.Body.Close()
+
+		// Retry on rate limiting / transient server errors.
+		if resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode >= 500 {
+			lastErr = fmt.Errorf("lever returned status %d for company %s", resp.StatusCode, c.company)
+			time.Sleep(time.Duration(500+attempt*1000) * time.Millisecond)
+			continue
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("unexpected status code %d for company %s", resp.StatusCode, c.company)
+		}
+
+		var leverJobs []LeverJob
+		if err := json.NewDecoder(resp.Body).Decode(&leverJobs); err != nil {
+			return nil, fmt.Errorf("failed to decode response: %w", err)
+		}
+
+		jobs := make([]domain.Job, 0, len(leverJobs))
+		for _, job := range leverJobs {
+			jobs = append(jobs, job.toDomain(c.company))
+		}
+
+		return jobs, nil
 	}
 
-	req.Header.Set(
-		"User-Agent",
-		"JobStream/1.0",
-	)
-
-	req.Header.Set(
-		"Accept",
-		"application/json",
-	)
-
-	resp, err := c.httpClient.Do(req)
-
-	if err != nil {
-		return nil, fmt.Errorf(
-			"http request failed: %w",
-			err,
-		)
-	}
-
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-
-		return nil, fmt.Errorf(
-			"unexpected status code %d for company %s",
-			resp.StatusCode,
-			c.company,
-		)
-	}
-
-	var leverJobs []LeverJob
-
-	if err := json.NewDecoder(resp.Body).Decode(&leverJobs); err != nil {
-
-		return nil, fmt.Errorf(
-			"failed to decode response: %w",
-			err,
-		)
-	}
-
-	jobs := make([]domain.Job, 0, len(leverJobs))
-
-	for _, job := range leverJobs {
-
-		jobs = append(
-			jobs,
-			job.toDomain(c.company),
-		)
-	}
-
-	return jobs, nil
+	return nil, fmt.Errorf("http request failed after retries: %w", lastErr)
 }

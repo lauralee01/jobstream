@@ -2,19 +2,15 @@ package weworkremotely
 
 import (
 	"context"
+	"encoding/xml"
 	"fmt"
-	"jobstream/internal/category"
 	"jobstream/internal/domain"
-	"log"
 	"net/http"
-	"strings"
 	"time"
-
-	"github.com/PuerkitoBio/goquery"
 )
 
 const (
-	arbeitNowURL = "https://weworkremotely.com/remote-jobs"
+	feedURL      = "https://weworkremotely.com/remote-jobs.rss"
 	platformName = "WeWorkRemotely"
 )
 
@@ -27,9 +23,9 @@ type Client struct {
 func NewClient() *Client {
 	return &Client{
 		httpClient: &http.Client{
-			Timeout: 10 * time.Second,
+			Timeout: 20 * time.Second,
 		},
-		baseURL: arbeitNowURL,
+		baseURL: feedURL,
 	}
 }
 
@@ -55,16 +51,8 @@ func (c *Client) Fetch(ctx context.Context) ([]domain.Job, error) {
 		)
 	}
 
-	// Headers
-	req.Header.Set(
-		"User-Agent",
-		"JobStream-Aggregator/1.0",
-	)
-
-	req.Header.Set(
-		"Accept",
-		"application/json",
-	)
+	req.Header.Set("User-Agent", "JobStream-Aggregator/1.0")
+	req.Header.Set("Accept", "application/rss+xml, application/xml;q=0.9, */*;q=0.8")
 
 	// Execute request
 	resp, err := c.httpClient.Do(req)
@@ -74,15 +62,6 @@ func (c *Client) Fetch(ctx context.Context) ([]domain.Job, error) {
 			"http request failed: %w",
 			err,
 		)
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode == http.StatusNotFound {
-		log.Printf("WeWorkRemotely board not found: %s", c.baseURL)
-		return nil, fmt.Errorf("WeWorkRemotely board not found: %s", c.baseURL)
 	}
 
 	defer resp.Body.Close()
@@ -95,48 +74,15 @@ func (c *Client) Fetch(ctx context.Context) ([]domain.Job, error) {
 		)
 	}
 
-	// Decode JSON
-
-	// Parse HTML
-	doc, err := goquery.NewDocumentFromReader(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse HTML: %w", err)
+	var rss RSS
+	if err := xml.NewDecoder(resp.Body).Decode(&rss); err != nil {
+		return nil, fmt.Errorf("failed to decode rss xml: %w", err)
 	}
 
-	var jobs []domain.Job
-
-	// Each job listing is inside <li class="feature">
-	doc.Find("li.feature").Each(func(i int, s *goquery.Selection) {
-
-		title := strings.TrimSpace(s.Find("span.title").Text())
-		company := strings.TrimSpace(s.Find("span.company").Text())
-		location := strings.TrimSpace(s.Find("span.region").Text())
-		rawCategory := strings.TrimSpace(s.Find("span.company").Parent().Parent().Find("h2").Text())
-
-		// Extract URL
-		href, exists := s.Find("a").Attr("href")
-		if !exists {
-			return
-		}
-
-		url := "https://weworkremotely.com" + href
-
-		// PostedAt is not provided → use now
-		postedAt := time.Now()
-
-		job := domain.Job{
-			Title:    title,
-			Company:  company,
-			Location: location,
-			URL:      url,
-			PostedAt: postedAt,
-			Category: category.Normalize(rawCategory, title),
-		}
-
-		log.Printf("Job: %v", job)
-
-		jobs = append(jobs, job)
-	})
+	jobs := make([]domain.Job, 0, len(rss.Channel.Items))
+	for _, item := range rss.Channel.Items {
+		jobs = append(jobs, item.toDomain())
+	}
 
 	return jobs, nil
 }

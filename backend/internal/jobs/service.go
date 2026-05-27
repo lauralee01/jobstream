@@ -55,6 +55,11 @@ func (s *JobService) SyncJobs(ctx context.Context) error {
 
 // GetJobs returns all jobs from the database.
 func (s *JobService) GetJobs(ctx context.Context, filter domain.JobFilter) ([]domain.Job, int64, error) {
+	if filter.Category != "" {
+		// Normalize incoming category filter so both legacy (e.g. "Accounting")
+		// and canonical (e.g. "Finance") values work.
+		filter.Category = category.Normalize(filter.Category, filter.Category)
+	}
 	return s.repo.FindAll(ctx, filter)
 }
 
