@@ -13,15 +13,24 @@ export const useJobs = () => {
       keyword: params.value.keyword || undefined,
       location: params.value.location || undefined,
       category: params.value.category || undefined,
-      // Primary key used by the current filters UI is `salaryMin`.
-      // Keep `minSalary` as fallback for backwards compatibility.
-      min_salary: params.value.salaryMin || params.value.minSalary || undefined,
+
+      min_salary:
+        params.value.salaryMin ||
+        params.value.minSalary ||
+        undefined,
+
       platforms:
         params.value.platforms?.length
           ? params.value.platforms.join(',')
           : undefined,
-      remote: params.value.remote ? 'true' : undefined,
+
+      remote:
+        params.value.remote
+          ? 'true'
+          : undefined,
+
       page: params.value.page || 1,
+
       limit: 20
     }))
 
@@ -34,12 +43,26 @@ export const useJobs = () => {
       `${API_BASE}/jobs`,
       {
         query,
-        key: () => `jobs-${JSON.stringify(query.value)}`
+
+        // Refetch whenever any query parameter changes
+        watch: [query],
+
+        // Prevent stale cache keys
+        key: computed(
+          () => `jobs-${JSON.stringify(query.value)}`
+        ),
+
+        default: () => ({
+          data: [],
+          metadata: {}
+        })
       }
     )
 
     return {
-      jobs: computed(() => data.value?.data || []),
+      jobs: computed(
+        () => data.value?.data || []
+      ),
 
       metadata: computed(
         () => data.value?.metadata || {}
@@ -59,7 +82,10 @@ export const useJobs = () => {
 
   const syncJobs = async () => {
 
-    const { data, error } = await useFetch(
+    const {
+      data,
+      error
+    } = await useFetch(
       `${API_BASE}/jobs/sync`,
       {
         method: 'POST'
@@ -77,9 +103,12 @@ export const useJobs = () => {
   // =========================================
 
   const fetchCategories = () => {
-    return useFetch(`${API_BASE}/jobs/categories`, {
-      key: 'categories'
-    })
+    return useFetch(
+      `${API_BASE}/jobs/categories`,
+      {
+        key: 'categories'
+      }
+    )
   }
 
   // =========================================
@@ -87,9 +116,12 @@ export const useJobs = () => {
   // =========================================
 
   const fetchPlatforms = () => {
-    return useFetch(`${API_BASE}/jobs/platforms`, {
-      key: 'platforms'
-    })
+    return useFetch(
+      `${API_BASE}/jobs/platforms`,
+      {
+        key: 'platforms'
+      }
+    )
   }
 
   return {

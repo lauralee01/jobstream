@@ -13,15 +13,22 @@ const filtersFromQuery = (query) => ({
   page: parseInt(query.page) || 1
 })
 
-const queryFromFilters = (filters) => ({
-  q: filters.keyword || undefined,
-  location: filters.location || undefined,
-  category: filters.category || undefined,
-  platforms: filters.platforms?.length ? filters.platforms.join(',') : undefined,
-  work_model: filters.remote ? 'remote' : undefined,
-  min_salary: filters.salaryMin || undefined,
-  page: filters.page > 1 ? filters.page : undefined
-})
+const queryFromFilters = (filters) => {
+  const query = {}
+
+  const keyword = filters.keyword?.trim()
+  const location = filters.location?.trim()
+
+  if (keyword) query.q = keyword
+  if (location) query.location = location
+  if (filters.category) query.category = filters.category
+  if (filters.platforms?.length) query.platforms = filters.platforms.join(',')
+  if (filters.remote) query.work_model = 'remote'
+  if (filters.salaryMin) query.min_salary = filters.salaryMin
+  if (filters.page > 1) query.page = String(filters.page)
+
+  return query
+}
 
 // Filters state initialized from URL query
 const searchParams = ref(filtersFromQuery(route.query))
@@ -42,31 +49,56 @@ const { jobs, metadata, pending, error, refresh } = fetchJobs(appliedParams)
 
 // Handle search trigger
 const handleSearch = (filters = searchParams.value) => {
-  // Reset to page 1 on new search
   const nextParams = {
-    ...filters,
+    keyword: filters.keyword?.trim() || '',
+    location: filters.location?.trim() || '',
+    category: filters.category || '',
+    platforms: filters.platforms || [],
+    remote: filters.remote || false,
+    salaryMin: filters.salaryMin || '',
     page: 1
   }
-  searchParams.value = { ...nextParams }
-  appliedParams.value = { ...nextParams }
+
+  searchParams.value = nextParams
+  appliedParams.value = nextParams
+
   updateUrl(nextParams)
 }
 
 // Handle pagination
-const changePage = (newPage) => {
+const changePage = async (newPage) => {
   const nextParams = {
     ...appliedParams.value,
     page: newPage
   }
+
   searchParams.value = { ...nextParams }
   appliedParams.value = { ...nextParams }
-  updateUrl(nextParams)
+
+  await updateUrl(nextParams)
+
+  await refresh()
 }
 
 // Update URL to make the applied search state shareable
 const updateUrl = async (filters) => {
   await router.replace({ query: queryFromFilters(filters) })
 }
+
+// When top search fields are cleared, re-apply filters so URL + API query reset.
+watch(
+  () => [searchParams.value.keyword, searchParams.value.location],
+  ([keyword, location]) => {
+    const keywordEmpty = !keyword?.trim()
+    const locationEmpty = !location?.trim()
+    const hadActiveSearch =
+      appliedParams.value.keyword?.trim() || appliedParams.value.location?.trim()
+
+    if (keywordEmpty && locationEmpty && hadActiveSearch) {
+      handleSearch()
+    }
+  }
+)
 
 // Sync jobs helper
 const isSyncing = ref(false)
@@ -150,7 +182,6 @@ const handleSync = async () => {
               </span>
               <input 
                 v-model="searchParams.keyword"
-                @keyup.enter="handleSearch"
                 type="text" 
                 placeholder="Job title, keywords, or company" 
                 class="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
@@ -165,18 +196,17 @@ const handleSync = async () => {
               </span>
               <input 
                 v-model="searchParams.location"
-                @keyup.enter="handleSearch"
                 type="text" 
                 placeholder="City, state, or remote" 
                 class="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               />
             </div>
-            <!-- <button 
-              @click="handleSearch"
-              class="bg-blue-600 text-white px-8 py-2.5 rounded-lg font-bold hover:bg-blue-700 transition-all active:scale-[0.98] shadow-lg shadow-blue-200 dark:shadow-none"
+            <button 
+              @click="handleSearch()"
+              class="bg-gray-900 dark:bg-gray-700 text-white px-8 py-2.5 rounded-lg font-bold hover:bg-blue-700 transition-all active:scale-[0.98] shadow-lg shadow-blue-200 dark:shadow-none"
             >
               Search
-            </button> -->
+            </button>
           </div>
 
           <!-- Loading/Error States -->
