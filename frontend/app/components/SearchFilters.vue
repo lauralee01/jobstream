@@ -98,7 +98,7 @@ const clearFilters = () => {
       <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Sort</label>
       <select
         v-model="sortSelection"
-        class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 outline-none transition-colors"
+        class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-base rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 outline-none transition-colors"
        
       >
         <option
@@ -116,7 +116,7 @@ const clearFilters = () => {
       <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Category</label>
       <select 
         v-model="filters.category"
-        class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 outline-none transition-colors"
+        class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-base rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 outline-none transition-colors"
       >
         <option value="">All Categories</option>
         <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
@@ -147,7 +147,7 @@ const clearFilters = () => {
           v-model="filters.salaryMin"
           type="number" 
           placeholder="e.g. 80000"
-          class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-7 p-2.5 outline-none transition-colors"
+          class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-base rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-7 p-2.5 outline-none transition-colors"
         >
       </div>
     </div>
