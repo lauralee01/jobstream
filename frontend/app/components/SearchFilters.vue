@@ -8,8 +8,30 @@ const props = defineProps({
       platforms: [],
       remote: false,
       salaryMin: '',
-      category: ''
+      category: '',
+      sortBy: 'posted_at',
+      sortOrder: 'desc'
     })
+  }
+})
+
+const sortOptions = [
+  { label: 'Newest first', sortBy: 'posted_at', sortOrder: 'desc' },
+  { label: 'Oldest first', sortBy: 'posted_at', sortOrder: 'asc' }
+]
+
+const sortSelection = computed({
+  get() {
+    const current = `${filters.value.sortBy}:${filters.value.sortOrder}`
+    const match = sortOptions.find(
+      (option) => `${option.sortBy}:${option.sortOrder}` === current
+    )
+    return match ? `${match.sortBy}:${match.sortOrder}` : 'posted_at:desc'
+  },
+  set(value) {
+    const [sortBy, sortOrder] = value.split(':')
+    filters.value.sortBy = sortBy
+    filters.value.sortOrder = sortOrder
   }
 })
 
@@ -49,7 +71,9 @@ const clearFilters = () => {
     platforms: [],
     remote: false,
     salaryMin: '',
-    category: ''
+    category: '',
+    sortBy: 'posted_at',
+    sortOrder: 'desc'
   }
   filters.value = cleared
   emit('update:modelValue', cleared)
@@ -67,6 +91,24 @@ const clearFilters = () => {
       >
         Clear all
       </button>
+    </div>
+
+    <!-- Sort -->
+    <div class="mb-6">
+      <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Sort</label>
+      <select
+        v-model="sortSelection"
+        class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 outline-none transition-colors"
+       
+      >
+        <option
+          v-for="option in sortOptions"
+          :key="`${option.sortBy}:${option.sortOrder}`"
+          :value="`${option.sortBy}:${option.sortOrder}`"
+        >
+          {{ option.label }}
+        </option>
+      </select>
     </div>
 
     <!-- Category -->

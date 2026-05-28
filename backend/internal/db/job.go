@@ -228,7 +228,7 @@ func (r *PostgresJobRepository) FindAll(
 		"company":    true,
 	}
 
-	sortBy := "created_at"
+	sortBy := "posted_at"
 
 	if allowedSortColumns[filter.SortBy] {
 		sortBy = filter.SortBy

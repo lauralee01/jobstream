@@ -132,6 +132,24 @@ func (h *JobHandler) GetJobs(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	sortBy := "posted_at"
+	sortOrder := "desc"
+
+	allowedSortColumns := map[string]bool{
+		"posted_at":  true,
+		"created_at": true,
+		"title":      true,
+		"company":    true,
+	}
+
+	if s := query.Get("sort_by"); allowedSortColumns[s] {
+		sortBy = s
+	}
+
+	if o := strings.ToLower(query.Get("sort_order")); o == "asc" || o == "desc" {
+		sortOrder = o
+	}
+
 	filter := domain.JobFilter{
 		Keyword:   query.Get("keyword"),
 		Location:  query.Get("location"),
@@ -141,8 +159,8 @@ func (h *JobHandler) GetJobs(w http.ResponseWriter, r *http.Request) {
 		IsRemote:  isRemote,
 		Page:      page,
 		Limit:     limit,
-		SortBy:    "created_at",
-		SortOrder: "desc",
+		SortBy:    sortBy,
+		SortOrder: sortOrder,
 	}
 
 	// =========================

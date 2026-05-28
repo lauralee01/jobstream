@@ -3,6 +3,9 @@ const { fetchJobs, syncJobs } = useJobs()
 const route = useRoute()
 const router = useRouter()
 
+const DEFAULT_SORT_BY = 'posted_at'
+const DEFAULT_SORT_ORDER = 'desc'
+
 const filtersFromQuery = (query) => ({
   keyword: query.q || '',
   location: query.location || '',
@@ -10,6 +13,8 @@ const filtersFromQuery = (query) => ({
   platforms: query.platforms ? query.platforms.split(',') : [],
   remote: query.work_model === 'remote',
   salaryMin: query.salary_min || query.min_salary || '',
+  sortBy: query.sort_by || DEFAULT_SORT_BY,
+  sortOrder: query.sort_order || DEFAULT_SORT_ORDER,
   page: parseInt(query.page) || 1
 })
 
@@ -26,6 +31,12 @@ const queryFromFilters = (filters) => {
   if (filters.remote) query.work_model = 'remote'
   if (filters.salaryMin) query.min_salary = filters.salaryMin
   if (filters.page > 1) query.page = String(filters.page)
+  if (filters.sortBy && filters.sortBy !== DEFAULT_SORT_BY) {
+    query.sort_by = filters.sortBy
+  }
+  if (filters.sortOrder && filters.sortOrder !== DEFAULT_SORT_ORDER) {
+    query.sort_order = filters.sortOrder
+  }
 
   return query
 }
@@ -56,6 +67,8 @@ const handleSearch = (filters = searchParams.value) => {
     platforms: filters.platforms || [],
     remote: filters.remote || false,
     salaryMin: filters.salaryMin || '',
+    sortBy: filters.sortBy || DEFAULT_SORT_BY,
+    sortOrder: filters.sortOrder || DEFAULT_SORT_ORDER,
     page: 1
   }
 

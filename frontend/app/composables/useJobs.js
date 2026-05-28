@@ -29,6 +29,9 @@ export const useJobs = () => {
           ? 'true'
           : undefined,
 
+      sort_by: params.value.sortBy || 'posted_at',
+      sort_order: params.value.sortOrder || 'desc',
+
       page: params.value.page || 1,
 
       limit: 20
