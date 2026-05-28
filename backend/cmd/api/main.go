@@ -46,31 +46,20 @@ func main() {
 	// 4. Initialize Company Repository
 	companyRepo := db.NewPostgresCompanyRepository(pool)
 
-	// 5. Fetch all Greenhouse companies
 	greenhouseCompanies, err := companyRepo.GetEnabledByProvider(
 		context.Background(),
 		"greenhouse",
 	)
-
-	// Fetch all Lever companies
+	if err != nil {
+		log.Fatalf("failed to load greenhouse companies: %v", err)
+	}
 
 	leverCompanies, err := companyRepo.GetEnabledByProvider(
 		context.Background(),
 		"lever",
 	)
-
 	if err != nil {
-		log.Fatalf(
-			"failed to load greenhouse companies: %v",
-			err,
-		)
-	}
-
-	if err != nil {
-		log.Fatalf(
-			"failed to load lever companies: %v",
-			err,
-		)
+		log.Fatalf("failed to load lever companies: %v", err)
 	}
 
 	// 5. Initialize Fetchers

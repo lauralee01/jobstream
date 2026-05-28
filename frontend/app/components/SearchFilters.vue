@@ -2,18 +2,19 @@
 const props = defineProps({
   modelValue: {
     type: Object,
-    default: () => ({
-      keyword: '',
-      location: '',
-      platforms: [],
-      remote: false,
-      salaryMin: '',
-      category: '',
-      sortBy: 'posted_at',
-      sortOrder: 'desc'
-    })
+    required: true
+  },
+  categories: {
+    type: Array,
+    default: () => []
+  },
+  platforms: {
+    type: Array,
+    default: () => []
   }
 })
+
+const emit = defineEmits(['update:modelValue', 'search', 'clear'])
 
 const sortOptions = [
   { label: 'Newest first', sortBy: 'posted_at', sortOrder: 'desc' },
@@ -22,7 +23,7 @@ const sortOptions = [
 
 const sortSelection = computed({
   get() {
-    const current = `${filters.value.sortBy}:${filters.value.sortOrder}`
+    const current = `${props.modelValue.sortBy}:${props.modelValue.sortOrder}`
     const match = sortOptions.find(
       (option) => `${option.sortBy}:${option.sortOrder}` === current
     )
@@ -30,54 +31,35 @@ const sortSelection = computed({
   },
   set(value) {
     const [sortBy, sortOrder] = value.split(':')
-    filters.value.sortBy = sortBy
-    filters.value.sortOrder = sortOrder
+    emit('update:modelValue', {
+      ...props.modelValue,
+      sortBy,
+      sortOrder
+    })
   }
 })
-
-const emit = defineEmits(['update:modelValue', 'search'])
-
-const { fetchCategories, fetchPlatforms } = useJobs()
-const { data: fetchedCategories } = await fetchCategories()
-const categories = computed(() => fetchedCategories.value || [])
-
-const { data: fetchedPlatforms } = await fetchPlatforms()
-const platforms = computed(() => {
-  return (fetchedPlatforms.value || []).map(p => ({
-    id: p,
-    name: p
-  }))
-})
-
-const filters = ref({ ...props.modelValue })
-
-// Sync local ref with parent modelValue
-watch(() => props.modelValue, (newVal) => {
-  if (JSON.stringify(newVal) !== JSON.stringify(filters.value)) {
-    filters.value = { ...newVal }
-  }
-}, { deep: true })
 
 const applyFilters = () => {
-  const applied = { ...filters.value }
-  emit('update:modelValue', applied)
-  emit('search', applied)
+  emit('search')
 }
 
 const clearFilters = () => {
-  const cleared = {
-    keyword: '',
-    location: '',
-    platforms: [],
-    remote: false,
-    salaryMin: '',
-    category: '',
-    sortBy: 'posted_at',
-    sortOrder: 'desc'
+  emit('clear')
+}
+
+const updateField = (patch) => {
+  emit('update:modelValue', { ...props.modelValue, ...patch })
+}
+
+const togglePlatform = (id) => {
+  const platforms = [...(props.modelValue.platforms || [])]
+  const index = platforms.indexOf(id)
+  if (index === -1) {
+    platforms.push(id)
+  } else {
+    platforms.splice(index, 1)
   }
-  filters.value = cleared
-  emit('update:modelValue', cleared)
-  emit('search', cleared)
+  updateField({ platforms })
 }
 </script>
 
@@ -85,21 +67,21 @@ const clearFilters = () => {
   <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 shadow-sm sticky top-24 transition-colors duration-300">
     <div class="flex justify-between items-center mb-6">
       <h2 class="text-lg font-bold text-gray-900 dark:text-white">Filters</h2>
-      <button 
-        @click="clearFilters"
+      <button
+        type="button"
         class="text-sm text-gray-900 dark:text-white hover:text-blue-800 dark:hover:text-blue-300 font-medium transition-colors"
+        @click="clearFilters"
       >
         Clear all
       </button>
     </div>
 
-    <!-- Sort -->
     <div class="mb-6">
       <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Sort</label>
       <select
         v-model="sortSelection"
-        class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-base rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 outline-none transition-colors"
-       
+        class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 outline-none transition-colors"
+        @change="applyFilters"
       >
         <option
           v-for="option in sortOptions"
@@ -111,66 +93,68 @@ const clearFilters = () => {
       </select>
     </div>
 
-    <!-- Category -->
     <div class="mb-6">
       <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Category</label>
-      <select 
-        v-model="filters.category"
-        class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-base rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 outline-none transition-colors"
+      <select
+        :value="modelValue.category"
+        class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 outline-none transition-colors"
+        @change="updateField({ category: $event.target.value })"
       >
         <option value="">All Categories</option>
         <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
       </select>
     </div>
 
-    <!-- Remote Checkbox -->
     <div class="mb-6 flex items-center">
-      <input 
-        id="remote-only" 
-        v-model="filters.remote"
-        type="checkbox" 
-        class="w-4 h-4 text-blue-600 bg-gray-100 dark:bg-gray-900 border-gray-300 dark:border-gray-700 rounded focus:ring-blue-500 transition-colors"
+      <input
+        id="remote-only"
+        :checked="modelValue.remote"
+        type="checkbox"
+        class="w-4 h-4 text-blue-600 bg-gray-100 dark:bg-gray-900 border-gray-300 dark:border-gray-700 rounded focus:ring-blue-500"
+        @change="updateField({ remote: $event.target.checked })"
       >
-      <label for="remote-only" class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300 select-none cursor-pointer hover:text-gray-900 dark:hover:text-white transition-colors">
+      <label for="remote-only" class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300 select-none cursor-pointer">
         Remote Only
       </label>
     </div>
 
-    <!-- Salary Range -->
     <div class="mb-6">
       <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Minimum Salary (USD)</label>
       <div class="relative">
         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <span class="text-gray-500 dark:text-gray-400 sm:text-sm">$</span>
         </div>
-        <input 
-          v-model="filters.salaryMin"
-          type="number" 
+        <input
+          :value="modelValue.salaryMin"
+          type="number"
           placeholder="e.g. 80000"
-          class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-base rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-7 p-2.5 outline-none transition-colors"
+          class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-7 p-2.5 outline-none transition-colors"
+          @input="updateField({ salaryMin: $event.target.value })"
         >
       </div>
     </div>
 
-    <!-- Platforms -->
     <div class="mb-6">
       <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Sources</label>
       <div class="space-y-2">
         <label v-for="platform in platforms" :key="platform.id" class="flex items-center group cursor-pointer">
-          <input 
-            v-model="filters.platforms"
-            type="checkbox" 
-            :value="platform.id"
-            class="w-4 h-4 text-blue-600 bg-gray-100 dark:bg-gray-900 border-gray-300 dark:border-gray-700 rounded focus:ring-blue-500 transition-colors"
+          <input
+            type="checkbox"
+            :checked="modelValue.platforms?.includes(platform.id)"
+            class="w-4 h-4 text-blue-600 bg-gray-100 dark:bg-gray-900 border-gray-300 dark:border-gray-700 rounded focus:ring-blue-500"
+            @change="togglePlatform(platform.id)"
           >
-          <span class="ml-2 text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">{{ platform.name }}</span>
+          <span class="ml-2 text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
+            {{ platform.name }}
+          </span>
         </label>
       </div>
     </div>
 
-    <button 
+    <button
+      type="button"
+      class="w-full bg-gray-900 dark:bg-gray-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-all active:scale-[0.98]"
       @click="applyFilters"
-      class="w-full bg-gray-900 dark:bg-gray-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 dark:shadow-none active:scale-[0.98]"
     >
       Apply Filters
     </button>

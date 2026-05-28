@@ -39,6 +39,7 @@ func (r *PostgresJobRepository) FindAll(
 	filter domain.JobFilter,
 ) ([]domain.Job, int64, error) {
 
+	// List view omits description — large TEXT column not needed in cards.
 	baseQuery := `
 		SELECT
 			id,
@@ -48,7 +49,6 @@ func (r *PostgresJobRepository) FindAll(
 			company,
 			location,
 			COALESCE(category, ''),
-			description,
 			url,
 			salary,
 			posted_at,
@@ -309,7 +309,6 @@ func (r *PostgresJobRepository) FindAll(
 			&job.Company,
 			&job.Location,
 			&job.Category,
-			&job.Description,
 			&job.URL,
 			&job.Salary,
 			&job.PostedAt,

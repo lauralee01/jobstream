@@ -10,7 +10,22 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8080/api/v1'
+      // In dev, prefer same-origin proxy (/api/v1) to avoid CORS round-trips.
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || '/api/v1'
     }
+  },
+
+  nitro: {
+    devProxy: {
+      '/api/v1': {
+        target: 'http://localhost:8080/api/v1',
+        changeOrigin: true
+      }
+    }
+  },
+
+  routeRules: {
+    '/': { prerender: false },
+    '/jobs': { ssr: true }
   }
 })

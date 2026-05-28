@@ -1,4 +1,6 @@
 <script setup>
+import { formatRelativeDate } from '~/utils/formatRelativeDate'
+
 defineProps({
   job: {
     type: Object,
@@ -6,26 +8,17 @@ defineProps({
   }
 })
 
-// Format date helper
-const formatDate = (dateString) => {
-  if (!dateString) return ''
-  const date = new Date(dateString)
-  const now = new Date()
-  const diffTime = Math.abs(now - date)
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-  
-  if (diffDays === 0) return 'Today'
-  if (diffDays === 1) return 'Yesterday'
-  return `${diffDays} days ago`
+const platformStyles = {
+  remotive: 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200',
+  adzuna: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
+  greenhouse: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200',
+  lever: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200',
+  weworkremotely: 'bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-200'
 }
 
-// Map platform to colors/icons (example)
 const getPlatformStyle = (platform) => {
-  const p = platform?.toLowerCase()
-  if (p === 'linkedin') return 'bg-blue-100 text-blue-700'
-  if (p === 'indeed') return 'bg-blue-50 text-blue-800'
-  if (p === 'glassdoor') return 'bg-green-100 text-green-700'
-  return 'bg-gray-100 text-gray-700'
+  const key = platform?.toLowerCase().replace(/\s+/g, '')
+  return platformStyles[key] || 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200'
 }
 </script>
 
@@ -39,13 +32,8 @@ const getPlatformStyle = (platform) => {
         >
           {{ job.platform }}
         </span>
-        <span class="text-xs text-gray-500 dark:text-gray-400">{{ formatDate(job.posted_at) }}</span>
+        <span class="text-xs text-gray-500 dark:text-gray-400">{{ formatRelativeDate(job.posted_at) }}</span>
       </div>
-      <button class="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-        </svg>
-      </button>
     </div>
  
     <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-1 transition-colors">
