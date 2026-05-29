@@ -260,6 +260,12 @@ func (r *PostgresJobRepository) FindAll(
 
 	offset := (filter.Page - 1) * filter.Limit
 
+	// FIX: Save the args count BEFORE adding pagination params
+	// This ensures the count query gets the right parameter values
+	countArgs := make([]interface{}, len(args))
+	copy(countArgs, args)
+
+	// Now append pagination args to the main query args
 	query += fmt.Sprintf(
 		" LIMIT $%d OFFSET $%d",
 		paramIdx,
@@ -277,7 +283,7 @@ func (r *PostgresJobRepository) FindAll(
 	err := r.db.QueryRow(
 		ctx,
 		countSQL,
-		args[:len(args)-2]...,
+		countArgs...,
 	).Scan(&total)
 
 	if err != nil {

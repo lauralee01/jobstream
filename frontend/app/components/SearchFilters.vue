@@ -81,7 +81,6 @@ const togglePlatform = (id) => {
       <select
         v-model="sortSelection"
         class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 outline-none transition-colors"
-        @change="applyFilters"
       >
         <option
           v-for="option in sortOptions"
