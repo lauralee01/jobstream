@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"jobstream/internal/domain"
+	"jobstream/internal/salary"
 	"strings"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -22,8 +23,26 @@ func NewPostgresJobRepository(pool *pgxpool.Pool) *PostgresJobRepository {
 	}
 }
 
+// Save persists a job to the database.
+// It now parses and normalizes salary before saving for efficient querying.
 func (r *PostgresJobRepository) Save(ctx context.Context, job *domain.Job) error {
-	_, err := r.db.Exec(ctx, "INSERT INTO jobs (id, source_id, platform, title, company, location, category, description, url, salary, posted_at, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) ON CONFLICT (source_id, platform) DO NOTHING", job.ID, job.SourceID, job.Platform, job.Title, job.Company, job.Location, job.Category, job.Description, job.URL, job.Salary, job.PostedAt, job.CreatedAt)
+	// Parse salary into min/max values ONCE during save
+	// This avoids expensive regex parsing on every query
+	parsed := salary.Parse(job.Salary)
+	job.SalaryMin = parsed.Min
+	job.SalaryMax = parsed.Max
+
+	_, err := r.db.Exec(ctx,
+		`INSERT INTO jobs (
+			id, source_id, platform, title, company, location, category, 
+			description, url, salary, salary_min, salary_max, posted_at, created_at
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+		ON CONFLICT (source_id, platform) DO NOTHING`,
+		job.ID, job.SourceID, job.Platform, job.Title, job.Company, job.Location,
+		job.Category, job.Description, job.URL, job.Salary, job.SalaryMin, job.SalaryMax,
+		job.PostedAt, job.CreatedAt,
+	)
+
 	if err != nil {
 		return err
 	}
@@ -34,6 +53,7 @@ func (r *PostgresJobRepository) Save(ctx context.Context, job *domain.Job) error
 // It returns a slice of jobs, the total count of matching jobs, and an error if any occurs.
 // The method supports filtering by keyword, category, location, and platform.
 // It also supports sorting and pagination.
+// OPTIMIZED: Now uses simple numeric comparisons for salary instead of regex parsing.
 func (r *PostgresJobRepository) FindAll(
 	ctx context.Context,
 	filter domain.JobFilter,
@@ -51,6 +71,8 @@ func (r *PostgresJobRepository) FindAll(
 			COALESCE(category, ''),
 			url,
 			salary,
+			salary_min,
+			salary_max,
 			posted_at,
 			created_at
 		FROM jobs
@@ -105,37 +127,16 @@ func (r *PostgresJobRepository) FindAll(
 	}
 
 	// =========================
-	// Min Salary Filter
+	// Min Salary Filter (OPTIMIZED)
 	// =========================
+	// Now uses simple numeric comparison on pre-parsed salary_min column
+	// instead of expensive regex parsing on every row
 
 	if filter.MinSalary != nil {
 
 		conditions = append(
 			conditions,
-			fmt.Sprintf(`
-			salary IS NOT NULL
-			AND salary != ''
-			AND EXISTS (
-				SELECT 1
-				FROM regexp_matches(
-						salary,
-						'([0-9][0-9,]*(\.[0-9]+)?)[[:space:]]*([kKmM])?'
-					) AS salary_parts(parts)
-				WHERE (
-					CASE
-						-- Treat values like "31,2k" as decimal notation (31.2k), not 312k.
-						WHEN parts[1] ~ '^[0-9]+,[0-9]{1,2}$' THEN REPLACE(parts[1], ',', '.')::numeric
-						-- Otherwise commas are thousands separators.
-						ELSE REPLACE(parts[1], ',', '')::numeric
-					END *
-					CASE LOWER(COALESCE(parts[3], ''))
-						WHEN 'k' THEN 1000
-						WHEN 'm' THEN 1000000
-						ELSE 1
-					END
-				) >= $%d
-			)
-		`, paramIdx),
+			fmt.Sprintf("salary_min IS NOT NULL AND salary_min >= $%d", paramIdx),
 		)
 
 		args = append(args, *filter.MinSalary)
@@ -317,6 +318,8 @@ func (r *PostgresJobRepository) FindAll(
 			&job.Category,
 			&job.URL,
 			&job.Salary,
+			&job.SalaryMin,
+			&job.SalaryMax,
 			&job.PostedAt,
 			&job.CreatedAt,
 		)
