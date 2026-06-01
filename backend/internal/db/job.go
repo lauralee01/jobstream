@@ -50,10 +50,6 @@ func (r *PostgresJobRepository) Save(ctx context.Context, job *domain.Job) error
 }
 
 // FindAll retrieves jobs from the database based on the provided filter.
-// It returns a slice of jobs, the total count of matching jobs, and an error if any occurs.
-// The method supports filtering by keyword, category, location, and platform.
-// It also supports sorting and pagination.
-// OPTIMIZED: Now uses simple numeric comparisons for salary instead of regex parsing.
 func (r *PostgresJobRepository) FindAll(
 	ctx context.Context,
 	filter domain.JobFilter,
