@@ -1,7 +1,36 @@
 <script setup>
+const props = defineProps({
+  modelValue: { type: Object, required: true }
+})
 const draft = defineModel({ type: Object, required: true })
 
-defineEmits(['search'])
+const emit = defineEmits(['update:modelValue', 'search'])
+
+// Track previous values to detect when clearing happens
+const prevKeyword = ref(props.modelValue.keyword)
+const prevLocation = ref(props.modelValue.location)
+
+// When keyword is cleared
+watch(
+  () => props.modelValue.keyword,
+  (newValue) => {
+    if (!newValue?.trim() && prevKeyword.value?.trim()) {
+      emit('search')
+    }
+    prevKeyword.value = newValue
+  }
+)
+
+// When location is cleared
+watch(
+  () => props.modelValue.location,
+  (newValue) => {
+    if (!newValue?.trim() && prevLocation.value?.trim()) {
+      emit('search')
+    }
+    prevLocation.value = newValue
+  }
+)
 </script>
 
 <template>

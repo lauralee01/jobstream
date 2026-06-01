@@ -35,21 +35,6 @@ export const useJobFilters = () => {
     await router.replace({ query: queryFromFilters(next) })
   }
 
-
-  // DEBOUNCED: Used for keyword and location inputs
-  // Prevents sending an API request on every keystroke
-  const applyFiltersDebounced = async (partial = draft.value) => {
-    // Clear any existing timer
-    if (debounceTimer) {
-      clearTimeout(debounceTimer)
-    }
-
-    // Set new timer - only apply filters after user stops typing
-    debounceTimer = setTimeout(async () => {
-      await applyFilters(partial)
-    }, DEBOUNCE_DELAY)
-  }
-
   const setPage = async (page) => {
     const next = normalizeFilters({ ...filters.value, page }, { resetPage: false })
     draft.value = next
@@ -62,7 +47,6 @@ export const useJobFilters = () => {
     filters,
     draft,
     applyFilters,
-    applyFiltersDebounced,
     setPage,
     clearAll
   }
