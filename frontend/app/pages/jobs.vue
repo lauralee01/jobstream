@@ -19,19 +19,6 @@ const handleSync = async () => {
   }
 }
 
-// // Clear top search fields → reset URL and show all jobs.
-// watch(
-//   () => [draft.value.keyword, draft.value.location],
-//   ([keyword, location]) => {
-//     const empty = !keyword?.trim() && !location?.trim()
-//     const hadSearch = filters.value.keyword?.trim() || filters.value.location?.trim()
-//     if (empty && hadSearch) {
-//       applyFilters()
-//     }
-//   }
-// )
-
-// DEBOUNCED: Keyword/location changes are debounced (500ms delay)
 // This prevents sending an API request on every keystroke
 watch(
   () => [draft.value.keyword, draft.value.location],
