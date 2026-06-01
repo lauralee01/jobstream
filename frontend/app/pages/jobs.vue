@@ -2,7 +2,7 @@
 definePageMeta({ layout: 'default' })
 
 const { fetchJobs, syncJobs } = useJobs()
-const { filters, draft, applyFilters, setPage, clearAll } = useJobFilters()
+const { filters, draft, applyFilters, applyFiltersDebounced, setPage, clearAll } = useJobFilters()
 const { categories, platformOptions, refreshMetadata } = useJobMetadata()
 
 const { jobs, metadata, pending, error } = fetchJobs(filters)
@@ -19,14 +19,32 @@ const handleSync = async () => {
   }
 }
 
-// Clear top search fields → reset URL and show all jobs.
+// // Clear top search fields → reset URL and show all jobs.
+// watch(
+//   () => [draft.value.keyword, draft.value.location],
+//   ([keyword, location]) => {
+//     const empty = !keyword?.trim() && !location?.trim()
+//     const hadSearch = filters.value.keyword?.trim() || filters.value.location?.trim()
+//     if (empty && hadSearch) {
+//       applyFilters()
+//     }
+//   }
+// )
+
+// DEBOUNCED: Keyword/location changes are debounced (500ms delay)
+// This prevents sending an API request on every keystroke
 watch(
   () => [draft.value.keyword, draft.value.location],
-  ([keyword, location]) => {
+  async ([keyword, location]) => {
     const empty = !keyword?.trim() && !location?.trim()
     const hadSearch = filters.value.keyword?.trim() || filters.value.location?.trim()
+    
     if (empty && hadSearch) {
-      applyFilters()
+      // If both fields are empty and we had a search, apply immediately
+      await applyFilters()
+    } else {
+      // Otherwise, debounce the search
+      await applyFiltersDebounced({ keyword, location })
     }
   }
 )
@@ -48,7 +66,7 @@ watch(
       </aside>
 
       <div class="lg:col-span-3">
-        <JobsSearchBar v-model="draft" @search="applyFilters" />
+        <JobsSearchBar v-model="draft" @search="applyFiltersDebounced" />
 
         <JobsResults
           :jobs="jobs"
