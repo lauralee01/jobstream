@@ -8,7 +8,6 @@ import {
 /**
  * URL is the source of truth for applied filters.
  * `draft` is bound to form controls; `applyFilters` commits draft → URL.
- * * DEBOUNCED: Keyword and location searches are debounced to prevent excessive API calls.
  */
 export const useJobFilters = () => {
   const route = useRoute()
@@ -16,10 +15,6 @@ export const useJobFilters = () => {
 
   const filters = computed(() => filtersFromQuery(route.query))
   const draft = ref({ ...filters.value })
-
-  // Debounce timer for search inputs
-  let debounceTimer = null
-  const DEBOUNCE_DELAY = 500 // Wait 500ms after user stops typing
 
   watch(
     filters,

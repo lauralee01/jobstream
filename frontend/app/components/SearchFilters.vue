@@ -21,23 +21,26 @@ const sortOptions = [
   { label: 'Oldest first', sortBy: 'posted_at', sortOrder: 'asc' }
 ]
 
-const sortSelection = computed({
-  get() {
-    const current = `${props.modelValue.sortBy}:${props.modelValue.sortOrder}`
-    const match = sortOptions.find(
-      (option) => `${option.sortBy}:${option.sortOrder}` === current
-    )
-    return match ? `${match.sortBy}:${match.sortOrder}` : 'posted_at:desc'
-  },
-  set(value) {
-    const [sortBy, sortOrder] = value.split(':')
+const sortLabels = computed(() => sortOptions.map(opt => opt.label))
+
+const currentSortLabel = computed(() => {
+  const current = `${props.modelValue.sortBy}:${props.modelValue.sortOrder}`
+  const match = sortOptions.find(
+    (option) => `${option.sortBy}:${option.sortOrder}` === current
+  )
+  return match?.label || sortOptions[0].label
+})
+
+const handleSortChange = (label) => {
+  const selected = sortOptions.find(opt => opt.label === label)
+  if (selected) {
     emit('update:modelValue', {
       ...props.modelValue,
-      sortBy,
-      sortOrder
+      sortBy: selected.sortBy,
+      sortOrder: selected.sortOrder
     })
   }
-})
+}
 
 const applyFilters = () => {
   emit('search')
@@ -77,31 +80,23 @@ const togglePlatform = (id) => {
     </div>
 
     <div class="mb-6">
-      <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Sort</label>
-      <select
-        v-model="sortSelection"
-        class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 outline-none transition-colors"
-      >
-        <option
-          v-for="option in sortOptions"
-          :key="`${option.sortBy}:${option.sortOrder}`"
-          :value="`${option.sortBy}:${option.sortOrder}`"
-        >
-          {{ option.label }}
-        </option>
-      </select>
+      <CustomSelect
+        :model-value="currentSortLabel"
+        label="Sort"
+        :options="sortLabels"
+        @update:model-value="handleSortChange"
+      /> 
+
     </div>
 
     <div class="mb-6">
-      <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Category</label>
-      <select
-        :value="modelValue.category"
-        class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 outline-none transition-colors"
-        @change="updateField({ category: $event.target.value })"
-      >
-        <option value="">All Categories</option>
-        <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-      </select>
+      <CustomSelect
+        :model-value="modelValue.category"
+        label="Category"
+        placeholder="All Categories"
+        :options="['All Categories', ...categories]"
+        @update:model-value="updateField({ category: $event === 'All Categories' ? '' : $event })"
+      />
     </div>
 
     <div class="mb-6 flex items-center">
