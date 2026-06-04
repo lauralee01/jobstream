@@ -5,7 +5,7 @@ const { fetchJobs, syncJobs } = useJobs()
 const { filters, draft, applyFilters, setPage, clearAll } = useJobFilters()
 const { categories, platformOptions, refreshMetadata } = useJobMetadata()
 
-const { jobs, metadata, pending, error } = fetchJobs(filters)
+const { jobs, metadata, pending, error, refresh } = fetchJobs(filters)
 
 const isSyncing = ref(false)
 
@@ -14,6 +14,7 @@ const handleSync = async () => {
   try {
     await syncJobs()
     await refreshMetadata()
+    await refresh()
   } finally {
     isSyncing.value = false
   }
