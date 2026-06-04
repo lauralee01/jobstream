@@ -25,33 +25,66 @@ func NewJobService(repo domain.JobRepository, fetchers []fetcher.Fetcher) *JobSe
 	}
 }
 
-// TODO: Implement a method that runs all fetchers and saves jobs to the database.
 func (s *JobService) SyncJobs(ctx context.Context) error {
-	for _, f := range s.fetchers {
-		jobs, err := f.Fetch(ctx)
-		if err != nil {
-			log.Printf("Error fetching jobs from %s: %v", f.Name(), err)
-			continue
-		}
+    var wg sync.WaitGroup
+    errCh := make(chan error, len(s.fetchers))
 
-		for _, job := range jobs {
-			job.Platform = f.Name()
-			job.Category = category.Normalize(job.Category, job.Title)
+    for _, f := range s.fetchers {
+        fetcher := f
 
-			if err := s.repo.Save(ctx, &job); err != nil {
-				log.Printf(
-					"Error saving job from %s (id=%s): %v",
-					f.Name(),
-					job.ID,
-					err,
-				)
-				continue
-			}
-		}
-	}
+        wg.Add(1)
+        go func() {
+            defer wg.Done()
 
-	return nil
+            jobs, err := fetcher.Fetch(ctx)
+            if err != nil {
+                log.Printf("Error fetching jobs from %s: %v", fetcher.Name(), err)
+                errCh <- err
+                return
+            }
+
+            // Preprocess jobs: platform, category, salary
+            for i := range jobs {
+                jobs[i].Platform = fetcher.Name()
+                jobs[i].Category = category.Normalize(jobs[i].Category, jobs[i].Title)
+
+                parsed := salary.Parse(jobs[i].Salary)
+                jobs[i].SalaryMin = parsed.Min
+                jobs[i].SalaryMax = parsed.Max
+            }
+
+            // Batch size (tune as needed)
+            const batchSize = 500
+
+            for start := 0; start < len(jobs); start += batchSize {
+                end := start + batchSize
+                if end > len(jobs) {
+                    end = len(jobs)
+                }
+
+                batch := jobs[start:end]
+
+                if err := s.repo.SaveBatch(ctx, batch); err != nil {
+                    log.Printf("Error saving batch from %s: %v", fetcher.Name(), err)
+                    errCh <- err
+                    return
+                }
+            }
+        }()
+    }
+
+    wg.Wait()
+    close(errCh)
+	
+    for err := range errCh {
+        if err != nil {
+            return err
+        }
+    }
+
+    return nil
 }
+
 
 // GetJobs returns all jobs from the database.
 func (s *JobService) GetJobs(ctx context.Context, filter domain.JobFilter) ([]domain.Job, int64, error) {

@@ -10,6 +10,7 @@ export const useJobs = () => {
     const { data, pending, error, refresh } = useFetch(`${API_BASE}/jobs`, {
       query,
       watch: [query],
+      key: 'jobs-list',
       default: () => ({ data: [], metadata: {} })
     })
 

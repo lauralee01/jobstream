@@ -14,7 +14,7 @@ const handleSync = async () => {
   try {
     await syncJobs()
     await refreshMetadata()
-    await refresh()
+    await refreshNuxtData(['jobs-list'])
   } finally {
     isSyncing.value = false
   }

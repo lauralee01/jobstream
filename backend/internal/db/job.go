@@ -23,30 +23,55 @@ func NewPostgresJobRepository(pool *pgxpool.Pool) *PostgresJobRepository {
 	}
 }
 
-// Save persists a job to the database.
-// It now parses and normalizes salary before saving for efficient querying.
-func (r *PostgresJobRepository) Save(ctx context.Context, job *domain.Job) error {
-	// Parse salary into min/max values ONCE during save
-	// This avoids expensive regex parsing on every query
-	parsed := salary.Parse(job.Salary)
-	job.SalaryMin = parsed.Min
-	job.SalaryMax = parsed.Max
 
-	_, err := r.db.Exec(ctx,
-		`INSERT INTO jobs (
-			id, source_id, platform, title, company, location, category, 
-			description, url, salary, salary_min, salary_max, posted_at, created_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-		ON CONFLICT (source_id, platform) DO NOTHING`,
-		job.ID, job.SourceID, job.Platform, job.Title, job.Company, job.Location,
-		job.Category, job.Description, job.URL, job.Salary, job.SalaryMin, job.SalaryMax,
-		job.PostedAt, job.CreatedAt,
-	)
+func (r *PostgresJobRepository) Save(ctx context.Context, jobs []domain.Job) error {
+    if len(jobs) == 0 {
+        return nil
+    }
 
-	if err != nil {
-		return err
-	}
-	return nil
+    const cols = 14 // number of columns in INSERT
+    valueStrings := make([]string, 0, len(jobs))
+    valueArgs := make([]interface{}, 0, len(jobs)*cols)
+
+    for i, job := range jobs {
+        // 1-based parameter index
+        base := i*cols + 1
+
+        valueStrings = append(valueStrings,
+            fmt.Sprintf("($%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d)",
+                base+0, base+1, base+2, base+3, base+4, base+5, base+6,
+                base+7, base+8, base+9, base+10, base+11, base+12, base+13,
+            ),
+        )
+
+        valueArgs = append(valueArgs,
+            job.ID,
+            job.SourceID,
+            job.Platform,
+            job.Title,
+            job.Company,
+            job.Location,
+            job.Category,
+            job.Description,
+            job.URL,
+            job.Salary,
+            job.SalaryMin,
+            job.SalaryMax,
+            job.PostedAt,
+            job.CreatedAt,
+        )
+    }
+
+    query := `
+        INSERT INTO jobs (
+            id, source_id, platform, title, company, location, category,
+            description, url, salary, salary_min, salary_max, posted_at, created_at
+        ) VALUES ` + strings.Join(valueStrings, ",") + `
+        ON CONFLICT (source_id, platform) DO NOTHING
+    `
+
+    _, err := r.db.Exec(ctx, query, valueArgs...)
+    return err
 }
 
 // FindAll retrieves jobs from the database based on the provided filter.
