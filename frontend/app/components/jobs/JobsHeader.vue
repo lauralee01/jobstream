@@ -24,9 +24,9 @@ defineEmits(['sync'])
           >
             Browse Jobs
           </NuxtLink>
-          <NuxtLink to="#" class="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+          <!-- <NuxtLink to="#" class="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
             Companies
-          </NuxtLink>
+          </NuxtLink> -->
           <!-- <NuxtLink to="#" class="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
             Salaries
           </NuxtLink> -->
