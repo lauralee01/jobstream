@@ -51,7 +51,7 @@ type Source struct {
 // JobRepository is an interface that defines how we interact with the database.
 // This allows us to swap PostgreSQL for something else later without changing business logic!
 type JobRepository interface {
-	Save(ctx context.Context, job *Job) error
+	Save(ctx context.Context, jobs []Job) error
 	FindAll(ctx context.Context, filter JobFilter) ([]Job, int64, error)
 	GetCategories(ctx context.Context) ([]string, error)
 	GetPlatforms(ctx context.Context) ([]string, error)

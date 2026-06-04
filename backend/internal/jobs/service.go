@@ -5,8 +5,10 @@ import (
 	"jobstream/internal/category"
 	"jobstream/internal/domain"
 	"jobstream/internal/fetcher"
+	"jobstream/internal/salary"
 	"log"
 	"sort"
+	"sync"
 )
 
 // JobService is a 'Service' in DDD.
@@ -64,7 +66,7 @@ func (s *JobService) SyncJobs(ctx context.Context) error {
 
                 batch := jobs[start:end]
 
-                if err := s.repo.SaveBatch(ctx, batch); err != nil {
+                if err := s.repo.Save(ctx, batch); err != nil {
                     log.Printf("Error saving batch from %s: %v", fetcher.Name(), err)
                     errCh <- err
                     return
@@ -75,7 +77,7 @@ func (s *JobService) SyncJobs(ctx context.Context) error {
 
     wg.Wait()
     close(errCh)
-	
+
     for err := range errCh {
         if err != nil {
             return err

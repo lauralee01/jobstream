@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"jobstream/internal/domain"
-	"jobstream/internal/salary"
 	"strings"
 
 	"github.com/jackc/pgx/v5/pgxpool"
