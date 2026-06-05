@@ -13,6 +13,7 @@ import (
 	"jobstream/internal/fetcher/greenhouse"
 	"jobstream/internal/fetcher/lever"
 	"jobstream/internal/fetcher/remotive"
+	"jobstream/internal/fetcher/remoteok"
 	"jobstream/internal/fetcher/weworkremotely"
 	"jobstream/internal/jobs"
 	"jobstream/internal/scheduler"
@@ -67,6 +68,7 @@ func main() {
 		remotive.NewClient(),
 		adzuna.NewAPIClient(),
 		weworkremotely.NewClient(),
+		remoteok.NewClient(),
 	}
 
 	for _, company := range greenhouseCompanies {
