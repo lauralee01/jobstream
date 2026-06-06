@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"jobstream/internal/domain"
 	"net"
 	"net/http"
@@ -39,7 +40,10 @@ func (c *Client) Fetch(ctx context.Context) ([]domain.Job, error) {
 			return nil, fmt.Errorf("failed to create request: %w", err)
 		}
 
-		req.Header.Set("User-Agent", "JobStream-Aggregator/1.0 (https://github.com/example/jobstream)")
+		req.Header.Set(
+			"User-Agent",
+			"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0 Safari/537.36",
+		)
 		req.Header.Set("Accept", "application/json")
 		req.Header.Set("Accept-Language", "en-US,en;q=0.9")
 		req.Header.Set("Referer", "https://remoteok.com/")
@@ -55,6 +59,9 @@ func (c *Client) Fetch(ctx context.Context) ([]domain.Job, error) {
 					continue
 				}
 			}
+			log.Println("REMOTEOK FETCH STARTED")
+			log.Printf("REMOTEOK STATUS: %d", resp.StatusCode)
+			log.Printf("REMOTEOK DECODE ERROR: %v", err)
 			return nil, fmt.Errorf("RemoteOK request failed: %w", err)
 		}
 		defer resp.Body.Close()
@@ -67,6 +74,10 @@ func (c *Client) Fetch(ctx context.Context) ([]domain.Job, error) {
 			}
 			return nil, fmt.Errorf("RemoteOK returned status %d", resp.StatusCode)
 		}
+
+		log.Println("REMOTEOK FETCH STARTED-PASSED")
+		log.Printf("REMOTEOK STATUS: %d-PASSED", resp.StatusCode)
+		log.Printf("REMOTEOK DECODE ERROR: %v", err)
 
 		var apiJobs []RemoteOKJob
 		if err := json.NewDecoder(resp.Body).Decode(&apiJobs); err != nil {

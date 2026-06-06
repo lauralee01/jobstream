@@ -73,11 +73,6 @@ func main() {
 
 	for _, company := range greenhouseCompanies {
 
-		log.Printf(
-			"Registering Greenhouse fetcher for: %s",
-			company.Slug,
-		)
-
 		fetchers = append(
 			fetchers,
 			greenhouse.NewClient(company.Slug),
@@ -85,11 +80,6 @@ func main() {
 	}
 
 	for _, company := range leverCompanies {
-
-		log.Printf(
-			"Registering Lever fetcher for: %s",
-			company.Slug,
-		)
 
 		fetchers = append(
 			fetchers,
