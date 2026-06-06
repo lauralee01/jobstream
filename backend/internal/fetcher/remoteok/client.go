@@ -1,101 +1,104 @@
 package remoteok
 
 import (
-	"context"
-	"encoding/json"
-	"fmt"
-	"log"
-	"jobstream/internal/domain"
-	"net"
-	"net/http"
-	"net/url"
-	"time"
+    "bytes"
+    "context"
+    "encoding/json"
+    "fmt"
+    "io"
+    "log"
+    "jobstream/internal/domain"
+    "net/http"
+    "time"
 )
 
 const (
-	platformName = "RemoteOK"
-	baseURL      = "https://remoteok.com/api"
+    platformName = "RemoteOK"
+    baseURL      = "https://remoteok.com/api"
 )
 
 type Client struct {
-	httpClient *http.Client
+    httpClient *http.Client
 }
 
 func NewClient() *Client {
-	return &Client{
-		httpClient: &http.Client{
-			Timeout: 30 * time.Second,
-		},
-	}
+    return &Client{
+        httpClient: &http.Client{
+            Timeout: 40 * time.Second,
+        },
+    }
 }
 
 func (c *Client) Name() string { return platformName }
 
 func (c *Client) Fetch(ctx context.Context) ([]domain.Job, error) {
-	var lastErr error
+    var lastErr error
 
-	for attempt := 0; attempt < 4; attempt++ {
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL, nil)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create request: %w", err)
-		}
+    for attempt := 0; attempt < 4; attempt++ {
 
-		req.Header.Set(
-			"User-Agent",
-			"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0 Safari/537.36",
-		)
-		req.Header.Set("Accept", "application/json")
-		req.Header.Set("Accept-Language", "en-US,en;q=0.9")
-		req.Header.Set("Referer", "https://remoteok.com/")
-		req.Header.Set("Cache-Control", "no-cache")
+        req, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL, nil)
+        if err != nil {
+            return nil, fmt.Errorf("RemoteOK: create request: %w", err)
+        }
 
-		resp, err := c.httpClient.Do(req)
-		if err != nil {
-			lastErr = err
-			// Retry on network errors
-			if uerr, ok := err.(*url.Error); ok {
-				if nerr, ok := uerr.Err.(net.Error); ok && (nerr.Timeout() || nerr.Temporary()) {
-					time.Sleep(time.Duration(400+attempt*600) * time.Millisecond)
-					continue
-				}
-			}
-			log.Println("REMOTEOK FETCH STARTED")
-			log.Printf("REMOTEOK STATUS: %d", resp.StatusCode)
-			log.Printf("REMOTEOK DECODE ERROR: %v", err)
-			return nil, fmt.Errorf("RemoteOK request failed: %w", err)
-		}
-		defer resp.Body.Close()
+        // FULL browser headers (required)
+        req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+        req.Header.Set("Accept", "application/json, text/plain, */*")
+        req.Header.Set("Accept-Language", "en-US,en;q=0.9")
+        req.Header.Set("Referer", "https://remoteok.com/")
+        req.Header.Set("Origin", "https://remoteok.com")
+        req.Header.Set("X-Requested-With", "XMLHttpRequest")
+        req.Header.Set("Sec-Fetch-Site", "same-origin")
+        req.Header.Set("Sec-Fetch-Mode", "cors")
+        req.Header.Set("Sec-Fetch-Dest", "empty")
+        req.Header.Set("Cache-Control", "no-cache")
 
-		if resp.StatusCode != http.StatusOK {
-			lastErr = fmt.Errorf("status code: %d", resp.StatusCode)
-			if resp.StatusCode == 429 || resp.StatusCode >= 500 {
-				time.Sleep(time.Duration(700+attempt*800) * time.Millisecond)
-				continue
-			}
-			return nil, fmt.Errorf("RemoteOK returned status %d", resp.StatusCode)
-		}
+        resp, err := c.httpClient.Do(req)
+        if err != nil {
+            lastErr = err
+            time.Sleep(time.Duration(600+attempt*800) * time.Millisecond)
+            continue
+        }
+        defer resp.Body.Close()
 
-		log.Println("REMOTEOK FETCH STARTED-PASSED")
-		log.Printf("REMOTEOK STATUS: %d-PASSED", resp.StatusCode)
-		log.Printf("REMOTEOK DECODE ERROR: %v", err)
+        if resp.StatusCode != http.StatusOK {
+            lastErr = fmt.Errorf("RemoteOK status %d", resp.StatusCode)
+            time.Sleep(time.Duration(600+attempt*800) * time.Millisecond)
+            continue
+        }
 
-		var apiJobs []RemoteOKJob
-		if err := json.NewDecoder(resp.Body).Decode(&apiJobs); err != nil {
-			return nil, fmt.Errorf("failed to decode JSON: %w", err)
-		}
+        bodyBytes, _ := io.ReadAll(resp.Body)
 
-		// Skip metadata object if present (first item with no id)
-		if len(apiJobs) > 0 && apiJobs[0].ID == "" {
-			apiJobs = apiJobs[1:]
-		}
+        // Detect HTML fallback (Cloudflare or error page)
+        if bytes.Contains(bodyBytes, []byte("<html")) {
+            log.Println("REMOTEOK ERROR: Received HTML instead of JSON")
+            log.Println("REMOTEOK RAW BODY:", string(bodyBytes))
+            lastErr = fmt.Errorf("RemoteOK returned HTML instead of JSON")
+            time.Sleep(time.Duration(600+attempt*800) * time.Millisecond)
+            continue
+        }
 
-		jobs := make([]domain.Job, 0, len(apiJobs))
-		for _, j := range apiJobs {
-			jobs = append(jobs, j.toDomain())
-		}
+        // Decode JSON
+        var apiJobs []RemoteOKJob
+        if err := json.Unmarshal(bodyBytes, &apiJobs); err != nil {
+            log.Println("REMOTEOK JSON DECODE ERROR:", err)
+            log.Println("REMOTEOK RAW BODY:", string(bodyBytes))
+            lastErr = err
+            time.Sleep(time.Duration(600+attempt*800) * time.Millisecond)
+            continue
+        }
 
-		return jobs, nil
-	}
+        if len(apiJobs) > 0 && apiJobs[0].ID == "" {
+            apiJobs = apiJobs[1:]
+        }
 
-	return nil, fmt.Errorf("RemoteOK fetch failed after retries: %w", lastErr)
+        jobs := make([]domain.Job, 0, len(apiJobs))
+        for _, j := range apiJobs {
+            jobs = append(jobs, j.toDomain())
+        }
+
+        return jobs, nil
+    }
+
+    return nil, fmt.Errorf("RemoteOK failed after retries: %w", lastErr)
 }
