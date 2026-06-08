@@ -20,7 +20,7 @@ defineEmits(['retry', 'prev-page', 'next-page'])
 </script>
 
 <template>
-  <JobListSkeleton v-if="pending" />
+  <JobsJobListSkeleton v-if="pending" />
 
   <div
     v-else-if="error"

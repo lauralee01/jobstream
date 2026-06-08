@@ -11,6 +11,7 @@ export const useJobs = () => {
       query,
       watch: [query],
       key: 'jobs-list',
+      lazy: true,
       default: () => ({ data: [], metadata: {} })
     })
 
