@@ -10,6 +10,7 @@ import (
 	"jobstream/internal/db"
 	"jobstream/internal/fetcher"
 	"jobstream/internal/fetcher/adzuna"
+	"jobstream/internal/fetcher/ashby"
 	"jobstream/internal/fetcher/greenhouse"
 	"jobstream/internal/fetcher/lever"
 	"jobstream/internal/fetcher/remotive"
@@ -62,6 +63,14 @@ func main() {
 		log.Fatalf("failed to load lever companies: %v", err)
 	}
 
+	ashbyCompanies, err := companyRepo.GetEnabledByProvider(
+		context.Background(),
+		"ashby",
+	)
+	if err != nil {
+		log.Fatalf("failed to load ashby companies: %v", err)
+	}
+
 	// 5. Initialize Fetchers
 	fetchers := []fetcher.Fetcher{
 		remotive.NewClient(),
@@ -82,6 +91,13 @@ func main() {
 		fetchers = append(
 			fetchers,
 			lever.NewClient(company.Slug),
+		)
+	}
+
+	for _, company := range ashbyCompanies {
+		fetchers = append(
+			fetchers,
+			ashby.NewClient(company.Slug),
 		)
 	}
 
