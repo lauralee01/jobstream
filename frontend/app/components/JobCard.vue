@@ -23,7 +23,7 @@ const getPlatformStyle = (platform) => {
 </script>
 
 <template>
-  <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 hover:shadow-md transition-all duration-300">
+  <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-none rounded-xl p-6 hover:shadow-md transition-all duration-300">
     <div class="flex justify-between items-start mb-4">
       <div class="flex items-center gap-2">
         <span 

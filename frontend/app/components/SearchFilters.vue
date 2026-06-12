@@ -67,7 +67,7 @@ const togglePlatform = (id) => {
 </script>
 
 <template>
-  <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 shadow-sm sticky top-24 transition-colors duration-300">
+  <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-none rounded-xl p-6 shadow-sm sticky top-24 transition-colors duration-300">
     <div class="flex justify-between items-center mb-6">
       <h2 class="text-lg font-bold text-gray-900 dark:text-white">Filters</h2>
       <button

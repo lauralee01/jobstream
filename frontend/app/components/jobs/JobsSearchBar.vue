@@ -34,7 +34,7 @@ watch(
 </script>
 
 <template>
-  <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-8 flex flex-col sm:flex-row gap-4 transition-colors duration-300">
+  <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-none p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-8 flex flex-col sm:flex-row gap-4 transition-colors duration-300">
     <div class="flex-grow relative">
       <span class="absolute inset-y-0 left-3 flex items-center text-gray-400">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
