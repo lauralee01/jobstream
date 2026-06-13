@@ -36,7 +36,7 @@ const platformNames = computed(() =>
       </span>
     </h1>
     <p class="animate-fade-in-up delay-500 text-xl text-gray-600 dark:text-gray-400 mb-10 max-w-2xl mx-auto">
-      Aggregate job listings from {{ platformNames }}.
+      Aggregate all job listings from {{ platformNames }}.
       Filter, search, and apply from a single, fast interface.
     </p>
 
