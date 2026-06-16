@@ -86,7 +86,7 @@ const theme = computed(() => {
 
 <template>
   <div 
-    class="group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700/60 rounded-xl p-6 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl active:scale-[0.985] active:duration-100 relative overflow-hidden"
+    class="group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700/60 rounded-xl p-6 transition-all duration-300 hover:-translate-y-1.5 active:scale-[0.985] active:duration-100 relative overflow-hidden"
     :class="theme.card"
   >
     <!-- Subtle top bar indicator matching the platform theme -->
