@@ -45,16 +45,32 @@ const themeColors = {
     title: 'group-hover:text-teal-600 dark:group-hover:text-teal-400',
     button: 'group-hover:bg-teal-600 dark:group-hover:bg-teal-500 hover:!bg-teal-700 dark:hover:!bg-teal-600 group-hover:shadow-teal-100 dark:group-hover:shadow-none',
     topBar: 'bg-teal-500 dark:bg-teal-400'
+  },
+  pink: {
+    badge: 'bg-pink-100 text-pink-800 dark:bg-pink-900/40 dark:text-pink-200',
+    card: 'hover:border-pink-300 dark:hover:border-pink-800/80 hover:shadow-pink-500/5 dark:hover:shadow-pink-500/10',
+    title: 'group-hover:text-pink-600 dark:group-hover:text-pink-400',
+    button: 'group-hover:bg-pink-600 dark:group-hover:bg-pink-500 hover:!bg-pink-700 dark:hover:!bg-pink-600 group-hover:shadow-pink-100 dark:group-hover:shadow-none',
+    topBar: 'bg-pink-500 dark:bg-pink-400'
+  },
+  yellow: {
+    badge: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-200',
+    card: 'hover:border-yellow-300 dark:hover:border-yellow-800/80 hover:shadow-yellow-500/5 dark:hover:shadow-yellow-500/10',
+    title: 'group-hover:text-yellow-600 dark:group-hover:text-yellow-400',
+    button: 'group-hover:bg-yellow-600 dark:group-hover:bg-yellow-500 hover:!bg-yellow-700 dark:hover:!bg-yellow-600 group-hover:shadow-yellow-100 dark:group-hover:shadow-none',
+    topBar: 'bg-yellow-500 dark:bg-yellow-400'
   }
 }
 
 // Explicit mapping for known platforms
 const platformColorMap = {
   remotive: 'purple',
+  ashby: 'yellow',
   adzuna: 'amber',
   greenhouse: 'green',
   lever: 'blue',
-  weworkremotely: 'teal'
+  weworkremotely: 'teal',
+  workable: 'pink'
 }
 
 const colorKeys = Object.keys(themeColors)
