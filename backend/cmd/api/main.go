@@ -15,6 +15,7 @@ import (
 	"jobstream/internal/fetcher/lever"
 	"jobstream/internal/fetcher/remotive"
 	"jobstream/internal/fetcher/weworkremotely"
+	"jobstream/internal/fetcher/workable"
 	"jobstream/internal/jobs"
 	"jobstream/internal/scheduler"
 
@@ -67,6 +68,11 @@ func main() {
 		context.Background(),
 		"ashby",
 	)
+
+	workableCompanies, err := companyRepo.GetEnabledByProvider(
+		context.Background(),
+		"workable",
+	)
 	if err != nil {
 		log.Fatalf("failed to load ashby companies: %v", err)
 	}
@@ -98,6 +104,13 @@ func main() {
 		fetchers = append(
 			fetchers,
 			ashby.NewClient(company.Slug),
+		)
+	}
+
+	for _, company := range workableCompanies {
+		fetchers = append(
+			fetchers,
+			workable.NewClient(company.Slug),
 		)
 	}
 
