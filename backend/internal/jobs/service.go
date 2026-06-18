@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"context"
+	"fmt"
 	"jobstream/internal/category"
 	"jobstream/internal/domain"
 	"jobstream/internal/fetcher"
@@ -11,15 +12,25 @@ import (
 	"sync"
 )
 
-// JobService is a 'Service' in DDD.
-// It coordinates the work between the domain models, the fetchers, and the database.
 type JobService struct {
 	repo     domain.JobRepository
 	fetchers []fetcher.Fetcher
 }
 
-// NewJobService creates a new job service.
-// This is an example of 'Dependency Injection'. We inject the repository and fetchers!
+type ProviderResult struct {
+	Provider string `json:"provider"`
+	Fetched  int    `json:"fetched"`
+	Saved    int    `json:"saved"`
+	Error    string `json:"error,omitempty"`
+}
+
+type SyncResult struct {
+	Fetched       int              `json:"fetched"`
+	Saved         int              `json:"saved"`
+	FailedSources []string         `json:"failed_sources"`
+	Providers     []ProviderResult `json:"providers"`
+}
+
 func NewJobService(repo domain.JobRepository, fetchers []fetcher.Fetcher) *JobService {
 	return &JobService{
 		repo:     repo,
@@ -27,78 +38,108 @@ func NewJobService(repo domain.JobRepository, fetchers []fetcher.Fetcher) *JobSe
 	}
 }
 
-func (s *JobService) SyncJobs(ctx context.Context) error {
-    var wg sync.WaitGroup
-    errCh := make(chan error, len(s.fetchers))
+func (s *JobService) SyncJobs(ctx context.Context) (SyncResult, error) {
+	var wg sync.WaitGroup
+	var mu sync.Mutex
 
-    for _, f := range s.fetchers {
-        fetcher := f
+	result := SyncResult{
+		FailedSources: []string{},
+		Providers:     []ProviderResult{},
+	}
 
-        wg.Add(1)
-        go func() {
-            defer wg.Done()
+	for _, f := range s.fetchers {
+		fetcher := f
 
-            jobs, err := fetcher.Fetch(ctx)
-            if err != nil {
-                log.Printf("Error fetching jobs from %s: %v", fetcher.Name(), err)
-                errCh <- err
-                return
-            }
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
 
-            // Preprocess jobs: platform, category, salary
-            for i := range jobs {
-                jobs[i].Platform = fetcher.Name()
-                jobs[i].Category = category.Normalize(jobs[i].Category, jobs[i].Title)
+			providerResult := ProviderResult{
+				Provider: fetcher.Name(),
+			}
 
-                parsed := salary.Parse(jobs[i].Salary)
-                jobs[i].SalaryMin = parsed.Min
-                jobs[i].SalaryMax = parsed.Max
-            }
+			jobs, err := fetcher.Fetch(ctx)
+			if err != nil {
+				msg := fmt.Sprintf("%s: fetch failed: %v", fetcher.Name(), err)
+				log.Println(msg)
 
-            // Batch size (tune as needed)
-            const batchSize = 500
+				providerResult.Error = msg
 
-            for start := 0; start < len(jobs); start += batchSize {
-                end := start + batchSize
-                if end > len(jobs) {
-                    end = len(jobs)
-                }
+				mu.Lock()
+				result.FailedSources = append(result.FailedSources, msg)
+				result.Providers = append(result.Providers, providerResult)
+				mu.Unlock()
 
-                batch := jobs[start:end]
+				return
+			}
 
-                if err := s.repo.Save(ctx, batch); err != nil {
-                    log.Printf("Error saving batch from %s: %v", fetcher.Name(), err)
-                    errCh <- err
-                    return
-                }
-            }
-        }()
-    }
+			for i := range jobs {
+				jobs[i].Platform = fetcher.Name()
+				jobs[i].Category = category.Normalize(jobs[i].Category, jobs[i].Title)
 
-    wg.Wait()
-    close(errCh)
+				parsed := salary.Parse(jobs[i].Salary)
+				jobs[i].SalaryMin = parsed.Min
+				jobs[i].SalaryMax = parsed.Max
+			}
 
-    for err := range errCh {
-        if err != nil {
-            return err
-        }
-    }
+			const batchSize = 500
+			savedCount := 0
 
-    return nil
+			for start := 0; start < len(jobs); start += batchSize {
+				end := start + batchSize
+				if end > len(jobs) {
+					end = len(jobs)
+				}
+
+				batch := jobs[start:end]
+
+				if err := s.repo.Save(ctx, batch); err != nil {
+					msg := fmt.Sprintf("%s: save failed: %v", fetcher.Name(), err)
+					log.Println(msg)
+
+					providerResult.Fetched = len(jobs)
+					providerResult.Saved = savedCount
+					providerResult.Error = msg
+
+					mu.Lock()
+					result.FailedSources = append(result.FailedSources, msg)
+					result.Providers = append(result.Providers, providerResult)
+					mu.Unlock()
+
+					return
+				}
+
+				savedCount += len(batch)
+			}
+
+			providerResult.Fetched = len(jobs)
+			providerResult.Saved = savedCount
+
+			mu.Lock()
+			result.Fetched += len(jobs)
+			result.Saved += savedCount
+			result.Providers = append(result.Providers, providerResult)
+			mu.Unlock()
+		}()
+	}
+
+	wg.Wait()
+
+	if result.Saved == 0 && len(result.FailedSources) > 0 {
+		return result, fmt.Errorf("all sync attempts failed")
+	}
+
+	return result, nil
 }
 
-
-// GetJobs returns all jobs from the database.
 func (s *JobService) GetJobs(ctx context.Context, filter domain.JobFilter) ([]domain.Job, int64, error) {
 	if filter.Category != "" {
-		// Normalize incoming category filter so both legacy (e.g. "Accounting")
-		// and canonical (e.g. "Finance") values work.
 		filter.Category = category.Normalize(filter.Category, filter.Category)
 	}
+
 	return s.repo.FindAll(ctx, filter)
 }
 
-// GetCategories returns all unique job categories.
 func (s *JobService) GetCategories(ctx context.Context) ([]string, error) {
 	categories, err := s.repo.GetCategories(ctx)
 	if err != nil {
@@ -106,11 +147,13 @@ func (s *JobService) GetCategories(ctx context.Context) ([]string, error) {
 	}
 
 	normalizedSet := map[string]struct{}{}
+
 	for _, cat := range categories {
 		normalized := category.Normalize(cat, cat)
 		if normalized == "" || normalized == "Other" {
 			continue
 		}
+
 		normalizedSet[normalized] = struct{}{}
 	}
 
@@ -118,12 +161,12 @@ func (s *JobService) GetCategories(ctx context.Context) ([]string, error) {
 	for cat := range normalizedSet {
 		normalizedCategories = append(normalizedCategories, cat)
 	}
+
 	sort.Strings(normalizedCategories)
 
 	return normalizedCategories, nil
 }
 
-// GetPlatforms returns all unique job platforms (sources).
 func (s *JobService) GetPlatforms(ctx context.Context) ([]string, error) {
 	return s.repo.GetPlatforms(ctx)
 }

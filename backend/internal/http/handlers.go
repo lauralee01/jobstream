@@ -6,20 +6,21 @@ import (
 	"jobstream/internal/cache"
 	"jobstream/internal/domain"
 	"jobstream/internal/jobs"
+	"log"
 	"math"
 	"net/http"
 	"time"
 )
 
 type JobHandler struct {
-	service *jobs.JobService
+	service       *jobs.JobService
 	metadataCache *cache.MetadataCache
 }
 
 func NewJobHandler(service *jobs.JobService) *JobHandler {
 	return &JobHandler{
-		service: service,
-		metadataCache: cache.NewMetadataCache(10 * time.Minute),//Cache categories/platforms for 10 min
+		service:       service,
+		metadataCache: cache.NewMetadataCache(10 * time.Minute), //Cache categories/platforms for 10 min
 	}
 }
 
@@ -29,22 +30,28 @@ func (h *JobHandler) SyncJobs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.service.SyncJobs(r.Context())
+	result, err := h.service.SyncJobs(r.Context())
 	if err != nil {
-		http.Error(w, "Failed to sync jobs", http.StatusInternalServerError)
+		log.Printf("SyncJobs failed: %v", err)
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"message": "Failed to sync jobs",
+			"result":  result,
+		})
 		return
 	}
 
-	// Invalidate cache after sync since data has changed
 	h.metadataCache.Invalidate()
 
 	w.Header().Set("Content-Type", "application/json")
 
-	if err := json.NewEncoder(w).Encode(map[string]string{
+	json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": "Jobs synced successfully",
-	}); err != nil {
-		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-	}
+		"result":  result,
+	})
 }
 
 // GetCategories returns a distinct list of non-empty categories.
@@ -68,7 +75,7 @@ func (h *JobHandler) GetPlatforms(w http.ResponseWriter, r *http.Request) {
 	platforms, err := h.metadataCache.GetPlatforms(r.Context(), func(ctx context.Context) ([]string, error) {
 		return h.service.GetPlatforms(ctx)
 	})
-	
+
 	if err != nil {
 		http.Error(w, "Failed to get platforms", http.StatusInternalServerError)
 		return
@@ -98,7 +105,7 @@ func (h *JobHandler) GetJobs(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to get jobs", http.StatusInternalServerError)
 		return
 	}
- 
+
 	limit := filter.Limit
 	if limit <= 0 {
 		limit = defaultLimit
