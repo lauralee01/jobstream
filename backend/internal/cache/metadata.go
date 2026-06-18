@@ -4,90 +4,134 @@ import (
 	"context"
 	"sync"
 	"time"
+
+	"golang.org/x/sync/singleflight"
 )
 
 // MetadataCache provides thread-safe caching for categories and platforms
-// with automatic expiration (TTL).
+// with separate expiration times and duplicate-request suppression.
 type MetadataCache struct {
-	mu         sync.RWMutex
-	categories []string
-	platforms  []string
-	expiresAt  time.Time
-	ttl        time.Duration
+	mu sync.RWMutex
+
+	categories          []string
+	categoriesExpiresAt time.Time
+
+	platforms          []string
+	platformsExpiresAt time.Time
+
+	ttl time.Duration
+
+	group singleflight.Group
 }
 
-// NewMetadataCache creates a new cache with the specified TTL
+// NewMetadataCache creates a new cache with the specified TTL.
 func NewMetadataCache(ttl time.Duration) *MetadataCache {
 	return &MetadataCache{
 		ttl: ttl,
 	}
 }
 
-// GetCategories returns cached categories if available and not expired,
-// otherwise calls fetch() to get fresh data and updates the cache
 func (c *MetadataCache) GetCategories(
 	ctx context.Context,
 	fetch func(context.Context) ([]string, error),
 ) ([]string, error) {
 	c.mu.RLock()
-	if time.Now().Before(c.expiresAt) && c.categories != nil {
-		defer c.mu.RUnlock()
-		return c.categories, nil
+	if time.Now().Before(c.categoriesExpiresAt) && c.categories != nil {
+		categories := c.categories
+		c.mu.RUnlock()
+		return categories, nil
 	}
 	c.mu.RUnlock()
 
-	// Cache miss or expired — fetch fresh data
-	categories, err := fetch(ctx)
+	result, err, _ := c.group.Do("categories", func() (interface{}, error) {
+		c.mu.RLock()
+		if time.Now().Before(c.categoriesExpiresAt) && c.categories != nil {
+			categories := c.categories
+			c.mu.RUnlock()
+			return categories, nil
+		}
+		c.mu.RUnlock()
+
+		categories, err := fetch(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		c.mu.Lock()
+		c.categories = categories
+		c.categoriesExpiresAt = time.Now().Add(c.ttl)
+		c.mu.Unlock()
+
+		return categories, nil
+	})
+
 	if err != nil {
 		return nil, err
 	}
 
-	// Update cache
-	c.mu.Lock()
-	c.categories = categories
-	c.expiresAt = time.Now().Add(c.ttl)
-	c.mu.Unlock()
-
-	return categories, nil
+	return result.([]string), nil
 }
 
-// GetPlatforms returns cached platforms if available and not expired,
-// otherwise calls fetch() to get fresh data and updates the cache
 func (c *MetadataCache) GetPlatforms(
 	ctx context.Context,
 	fetch func(context.Context) ([]string, error),
 ) ([]string, error) {
 	c.mu.RLock()
-	if time.Now().Before(c.expiresAt) && c.platforms != nil {
-		defer c.mu.RUnlock()
-		return c.platforms, nil
+	if time.Now().Before(c.platformsExpiresAt) && c.platforms != nil {
+		platforms := c.platforms
+		c.mu.RUnlock()
+		return platforms, nil
 	}
 	c.mu.RUnlock()
 
-	// Cache miss or expired — fetch fresh data
-	platforms, err := fetch(ctx)
+	result, err, _ := c.group.Do("platforms", func() (interface{}, error) {
+		c.mu.RLock()
+		if time.Now().Before(c.platformsExpiresAt) && c.platforms != nil {
+			platforms := c.platforms
+			c.mu.RUnlock()
+			return platforms, nil
+		}
+		c.mu.RUnlock()
+
+		platforms, err := fetch(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		c.mu.Lock()
+		c.platforms = platforms
+		c.platformsExpiresAt = time.Now().Add(c.ttl)
+		c.mu.Unlock()
+
+		return platforms, nil
+	})
+
 	if err != nil {
 		return nil, err
 	}
 
-	// Update cache
-	c.mu.Lock()
-	c.platforms = platforms
-	c.expiresAt = time.Now().Add(c.ttl)
-	c.mu.Unlock()
-
-	return platforms, nil
+	return result.([]string), nil
 }
 
-// Invalidate forces a cache refresh on next request
 func (c *MetadataCache) Invalidate() {
 	c.mu.Lock()
-	c.expiresAt = time.Now()
+	c.categoriesExpiresAt = time.Now()
+	c.platformsExpiresAt = time.Now()
 	c.mu.Unlock()
 }
 
-// InvalidateAfter schedules automatic invalidation after duration
-// Useful for periodic refreshes
+func (c *MetadataCache) InvalidateCategories() {
+	c.mu.Lock()
+	c.categoriesExpiresAt = time.Now()
+	c.mu.Unlock()
+}
+
+func (c *MetadataCache) InvalidatePlatforms() {
+	c.mu.Lock()
+	c.platformsExpiresAt = time.Now()
+	c.mu.Unlock()
+}
+
 func (c *MetadataCache) InvalidateAfter(duration time.Duration) {
 	time.AfterFunc(duration, c.Invalidate)
 }
