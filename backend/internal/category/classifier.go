@@ -9,15 +9,15 @@ type categoryRule struct {
 
 // Ordered rules make classification deterministic across runs.
 var categoryRules = []categoryRule{
-	{name: "Engineering", keywords: []string{"engineer", "developer", "software", "backend", "frontend", "full stack", "devops", "platform", "sre", "mobile", "ios", "android"}},
+	{name: "Security", keywords: []string{"security", "cybersecurity", "infosec", "application security"}},
+	{name: "Design", keywords: []string{"designer", "ux", "ui", "product design", "visual design"}},
 	{name: "Data", keywords: []string{"data", "analytics", "scientist", "machine learning", "ml", "ai"}},
 	{name: "Product", keywords: []string{"product manager", "product owner", "product"}},
-	{name: "Design", keywords: []string{"designer", "ux", "ui", "product design", "visual design"}},
+	{name: "Engineering", keywords: []string{"engineer", "developer", "software", "backend", "frontend", "full stack", "devops", "platform", "sre", "mobile", "ios", "android"}},
 	{name: "Marketing", keywords: []string{"marketing", "growth", "seo", "content", "brand"}},
 	{name: "Sales", keywords: []string{"sales", "account executive", "business development"}},
 	{name: "People", keywords: []string{"recruiter", "talent", "people operations", "human resources", "hr"}},
 	{name: "Finance", keywords: []string{"finance", "accounting", "financial"}},
-	{name: "Security", keywords: []string{"security", "cybersecurity", "infosec", "application security"}},
 	{name: "Operations", keywords: []string{"operations", "program manager", "technical program manager"}},
 	{name: "Customer Success", keywords: []string{"customer success", "support", "customer support", "success manager"}},
 	{name: "Legal", keywords: []string{"legal", "counsel", "paralegal", "compliance"}},
@@ -40,7 +40,7 @@ var normalizedAliases = map[string]string{
 	"marketing": "Marketing",
 	"growth":    "Marketing",
 
-	"sales":               "Sales",
+	"sales":                "Sales",
 	"business development": "Sales",
 
 	"hr":              "People",
@@ -79,12 +79,6 @@ func inferFromText(text string) string {
 	}
 
 	return "Other"
-}
-
-// Infer attempts to determine a normalized category
-// from a job title.
-func Infer(title string) string {
-	return inferFromText(title)
 }
 
 // Normalize first tries to map source-provided categories to canonical values.
