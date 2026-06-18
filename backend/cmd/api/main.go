@@ -68,13 +68,16 @@ func main() {
 		context.Background(),
 		"ashby",
 	)
+	if err != nil {
+		log.Fatalf("failed to load ashby companies: %v", err)
+	}
 
 	workableCompanies, err := companyRepo.GetEnabledByProvider(
 		context.Background(),
 		"workable",
 	)
 	if err != nil {
-		log.Fatalf("failed to load ashby companies: %v", err)
+		log.Fatalf("failed to load workable companies: %v", err)
 	}
 
 	// 5. Initialize Fetchers
