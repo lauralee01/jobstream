@@ -18,8 +18,8 @@ type Job struct {
 	Description string    `json:"description"`
 	URL         string    `json:"url"`
 	Salary      string    `json:"salary"`
-	SalaryMin   *int64 `json:"salary_min,omitempty"`
-	SalaryMax *int64 `json:"salary_max,omitempty"`
+	SalaryMin   *int64    `json:"salary_min,omitempty"`
+	SalaryMax   *int64    `json:"salary_max,omitempty"`
 	PostedAt    time.Time `json:"posted_at"`
 	CreatedAt   time.Time `json:"created_at"`
 }
@@ -31,8 +31,7 @@ type JobFilter struct {
 	Category  string
 	MinSalary *int
 	Platforms []string
-
-	IsRemote *bool
+	IsRemote  bool
 
 	Page  int
 	Limit int

@@ -1,0 +1,2 @@
+ALTER TABLE jobs
+ADD COLUMN is_remote BOOLEAN NOT NULL DEFAULT false;

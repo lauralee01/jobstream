@@ -22,46 +22,45 @@ func NewPostgresJobRepository(pool *pgxpool.Pool) *PostgresJobRepository {
 	}
 }
 
-
 func (r *PostgresJobRepository) Save(ctx context.Context, jobs []domain.Job) error {
-    if len(jobs) == 0 {
-        return nil
-    }
+	if len(jobs) == 0 {
+		return nil
+	}
 
-    const cols = 14 // number of columns in INSERT
-    valueStrings := make([]string, 0, len(jobs))
-    valueArgs := make([]interface{}, 0, len(jobs)*cols)
+	const cols = 14 // number of columns in INSERT
+	valueStrings := make([]string, 0, len(jobs))
+	valueArgs := make([]interface{}, 0, len(jobs)*cols)
 
-    for i, job := range jobs {
-        // 1-based parameter index
-        base := i*cols + 1
+	for i, job := range jobs {
+		// 1-based parameter index
+		base := i*cols + 1
 
-        valueStrings = append(valueStrings,
-            fmt.Sprintf("($%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d)",
-                base+0, base+1, base+2, base+3, base+4, base+5, base+6,
-                base+7, base+8, base+9, base+10, base+11, base+12, base+13,
-            ),
-        )
+		valueStrings = append(valueStrings,
+			fmt.Sprintf("($%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d)",
+				base+0, base+1, base+2, base+3, base+4, base+5, base+6,
+				base+7, base+8, base+9, base+10, base+11, base+12, base+13,
+			),
+		)
 
-        valueArgs = append(valueArgs,
-            job.ID,
-            job.SourceID,
-            job.Platform,
-            job.Title,
-            job.Company,
-            job.Location,
-            job.Category,
-            job.Description,
-            job.URL,
-            job.Salary,
-            job.SalaryMin,
-            job.SalaryMax,
-            job.PostedAt,
-            job.CreatedAt,
-        )
-    }
+		valueArgs = append(valueArgs,
+			job.ID,
+			job.SourceID,
+			job.Platform,
+			job.Title,
+			job.Company,
+			job.Location,
+			job.Category,
+			job.Description,
+			job.URL,
+			job.Salary,
+			job.SalaryMin,
+			job.SalaryMax,
+			job.PostedAt,
+			job.CreatedAt,
+		)
+	}
 
-    query := `
+	query := `
         INSERT INTO jobs (
             id, source_id, platform, title, company, location, category,
             description, url, salary, salary_min, salary_max, posted_at, created_at
@@ -69,8 +68,8 @@ func (r *PostgresJobRepository) Save(ctx context.Context, jobs []domain.Job) err
         ON CONFLICT (source_id, platform) DO NOTHING
     `
 
-    _, err := r.db.Exec(ctx, query, valueArgs...)
-    return err
+	_, err := r.db.Exec(ctx, query, valueArgs...)
+	return err
 }
 
 // FindAll retrieves jobs from the database based on the provided filter.
@@ -182,14 +181,14 @@ func (r *PostgresJobRepository) FindAll(
 	// Remote Only Filter
 	// =========================
 
-	if filter.IsRemote != nil && *filter.IsRemote {
-		conditions = append(
-			conditions,
-			fmt.Sprintf("(platform IN ('WeWorkRemotely', 'Remotive') OR location ILIKE $%d)", paramIdx),
-		)
-		args = append(args, "%remote%")
-		paramIdx++
-	}
+	// if filter.IsRemote != nil && *filter.IsRemote {
+	// 	conditions = append(
+	// 		conditions,
+	// 		fmt.Sprintf("(platform IN ('WeWorkRemotely', 'Remotive') OR location ILIKE $%d)", paramIdx),
+	// 	)
+	// 	args = append(args, "%remote%")
+	// 	paramIdx++
+	// }
 
 	// =========================
 	// Platform Filter
