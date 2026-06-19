@@ -35,6 +35,7 @@ func (r *PostgresCompanyRepository) GetEnabledByProvider(
 		FROM companies
 		WHERE provider = $1
 		AND enabled = true
+		ORDER BY name ASC;
 	`
 
 	rows, err := r.db.Query(

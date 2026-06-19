@@ -43,7 +43,7 @@ func main() {
 	defer pool.Close()
 
 	// 3. Initialize Job Repository
-	repo := db.NewPostgresJobRepository(pool)
+	jobRepo := db.NewPostgresJobRepository(pool)
 
 	// 4. Initialize Company Repository
 	companyRepo := db.NewPostgresCompanyRepository(pool)
@@ -118,7 +118,7 @@ func main() {
 	}
 
 	// 5. Initialize Job Service
-	jobService := jobs.NewJobService(repo, fetchers)
+	jobService := jobs.NewJobService(jobRepo, fetchers)
 
 	// 6. Start Scheduler (runs in background)
 	ctx, cancel := context.WithCancel(context.Background())
