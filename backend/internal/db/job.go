@@ -27,7 +27,7 @@ func (r *PostgresJobRepository) Save(ctx context.Context, jobs []domain.Job) err
 		return nil
 	}
 
-	const cols = 14 // number of columns in INSERT
+	const cols = 15 // number of columns in INSERT
 	valueStrings := make([]string, 0, len(jobs))
 	valueArgs := make([]interface{}, 0, len(jobs)*cols)
 
@@ -36,9 +36,9 @@ func (r *PostgresJobRepository) Save(ctx context.Context, jobs []domain.Job) err
 		base := i*cols + 1
 
 		valueStrings = append(valueStrings,
-			fmt.Sprintf("($%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d)",
+			fmt.Sprintf("($%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d)",
 				base+0, base+1, base+2, base+3, base+4, base+5, base+6,
-				base+7, base+8, base+9, base+10, base+11, base+12, base+13,
+				base+7, base+8, base+9, base+10, base+11, base+12, base+13, base+14,
 			),
 		)
 
@@ -55,6 +55,7 @@ func (r *PostgresJobRepository) Save(ctx context.Context, jobs []domain.Job) err
 			job.Salary,
 			job.SalaryMin,
 			job.SalaryMax,
+			job.IsRemote,
 			job.PostedAt,
 			job.CreatedAt,
 		)
@@ -63,7 +64,7 @@ func (r *PostgresJobRepository) Save(ctx context.Context, jobs []domain.Job) err
 	query := `
         INSERT INTO jobs (
             id, source_id, platform, title, company, location, category,
-            description, url, salary, salary_min, salary_max, posted_at, created_at
+            description, url, salary, salary_min, salary_max, is_remote, posted_at, created_at
         ) VALUES ` + strings.Join(valueStrings, ",") + `
         ON CONFLICT (source_id, platform) DO NOTHING
     `
@@ -92,6 +93,7 @@ func (r *PostgresJobRepository) FindAll(
 			salary,
 			salary_min,
 			salary_max,
+			is_remote,
 			posted_at,
 			created_at
 		FROM jobs
@@ -181,14 +183,9 @@ func (r *PostgresJobRepository) FindAll(
 	// Remote Only Filter
 	// =========================
 
-	// if filter.IsRemote != nil && *filter.IsRemote {
-	// 	conditions = append(
-	// 		conditions,
-	// 		fmt.Sprintf("(platform IN ('WeWorkRemotely', 'Remotive') OR location ILIKE $%d)", paramIdx),
-	// 	)
-	// 	args = append(args, "%remote%")
-	// 	paramIdx++
-	// }
+	if filter.IsRemote != nil && *filter.IsRemote {
+		conditions = append(conditions, "is_remote = true")
+	}
 
 	// =========================
 	// Platform Filter
@@ -339,6 +336,7 @@ func (r *PostgresJobRepository) FindAll(
 			&job.Salary,
 			&job.SalaryMin,
 			&job.SalaryMax,
+			&job.IsRemote,
 			&job.PostedAt,
 			&job.CreatedAt,
 		)

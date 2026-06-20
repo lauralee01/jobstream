@@ -14,6 +14,7 @@ type Job struct {
 	Title       string    `json:"title"`
 	Company     string    `json:"company"`
 	Location    string    `json:"location"`
+	IsRemote    bool      `json:"is_remote"`
 	Category    string    `json:"category"`
 	Description string    `json:"description"`
 	URL         string    `json:"url"`
@@ -31,7 +32,7 @@ type JobFilter struct {
 	Category  string
 	MinSalary *int
 	Platforms []string
-	IsRemote  bool
+	IsRemote  *bool
 
 	Page  int
 	Limit int

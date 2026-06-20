@@ -125,11 +125,6 @@ func (h *JobHandler) GetJobs(w http.ResponseWriter, r *http.Request) {
 		Data: jobs,
 	}
 
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"message": "Jobs fetched successfully",
-		"result":  response,
-	})
-
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 	}

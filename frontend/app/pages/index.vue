@@ -48,7 +48,7 @@ const platformNames = computed(() =>
         Browse All Jobs
       </NuxtLink>
       <NuxtLink
-        to="/jobs?work_model=remote"
+        to="/jobs?remote=true"
         class="w-full sm:w-auto bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-lg px-10 py-4 rounded-xl font-bold border-2 border-gray-100 dark:border-gray-700 hover:border-gray-200 transition-all"
       >
         Remote Only

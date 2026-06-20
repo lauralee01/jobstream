@@ -6,6 +6,7 @@ import (
 	"jobstream/internal/category"
 	"jobstream/internal/domain"
 	"jobstream/internal/fetcher"
+	"jobstream/internal/remote"
 	"jobstream/internal/salary"
 	"log"
 	"sort"
@@ -76,7 +77,7 @@ func (s *JobService) SyncJobs(ctx context.Context) (SyncResult, error) {
 			for i := range jobs {
 				jobs[i].Platform = fetcher.Name()
 				jobs[i].Category = category.Normalize(jobs[i].Category, jobs[i].Title)
-
+				jobs[i].IsRemote = remote.Detect(jobs[i])
 				parsed := salary.Parse(jobs[i].Salary)
 				jobs[i].SalaryMin = parsed.Min
 				jobs[i].SalaryMax = parsed.Max

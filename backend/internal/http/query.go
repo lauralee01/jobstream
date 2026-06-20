@@ -46,10 +46,10 @@ func parseJobFilter(r *http.Request) domain.JobFilter {
 		}
 	}
 
-	isRemote := false
+	var isRemote *bool
 	if rVal := query.Get("remote"); rVal != "" {
 		if parsed, err := strconv.ParseBool(rVal); err == nil {
-			isRemote = parsed
+			isRemote = &parsed
 		}
 	}
 
