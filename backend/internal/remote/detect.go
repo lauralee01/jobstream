@@ -2,6 +2,7 @@ package remote
 
 import (
 	"jobstream/internal/domain"
+	"regexp"
 	"strings"
 )
 
@@ -10,32 +11,34 @@ var remoteOnlyPlatforms = map[string]bool{
 	"Remotive":       true,
 }
 
+var (
+	remoteRegex = regexp.MustCompile(`(?i)\b(remote|remotely|remote-first|fully remote|work from home|wfh|anywhere|worldwide|distributed)\b`)
+
+	notRemoteRegex = regexp.MustCompile(`(?i)\b(not\s+remote|no\s+remote|non-remote|not\s+a\s+remote|remote:\s*no|remote:\s*false|temporary\s+remote|remote\s+not\s+available)\b`)
+)
+
 func Detect(job domain.Job) bool {
 	if remoteOnlyPlatforms[job.Platform] {
 		return true
 	}
 
-	text := strings.ToLower(
-		job.Location + " " +
-			job.Title + " " +
-			job.Description,
-	)
+	location := strings.ToLower(strings.TrimSpace(job.Location))
 
-	remoteKeywords := []string{
-		"remote",
-		"remote-first",
-		"fully remote",
-		"work from home",
-		"wfh",
-		"anywhere",
-		"distributed",
-	}
+	if location != "" {
+		if notRemoteRegex.MatchString(location) {
+			return false
+		}
 
-	for _, keyword := range remoteKeywords {
-		if strings.Contains(text, keyword) {
+		if remoteRegex.MatchString(location) {
 			return true
 		}
 	}
 
-	return false
+	text := job.Location + " " + job.Title + " " + job.Description
+
+	if notRemoteRegex.MatchString(text) {
+		return false
+	}
+
+	return remoteRegex.MatchString(text)
 }
