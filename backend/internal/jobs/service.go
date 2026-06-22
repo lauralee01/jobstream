@@ -40,6 +40,24 @@ func NewJobService(repo domain.JobRepository, fetchers []fetcher.Fetcher) *JobSe
 	}
 }
 
+func dedupeJobs(jobs []domain.Job) []domain.Job {
+	seen := make(map[string]struct{})
+	deduped := make([]domain.Job, 0, len(jobs))
+
+	for _, job := range jobs {
+		key := job.SourceID + "|" + job.Platform
+
+		if _, exists := seen[key]; exists {
+			continue
+		}
+
+		seen[key] = struct{}{}
+		deduped = append(deduped, job)
+	}
+
+	return deduped
+}
+
 func (s *JobService) SyncJobs(ctx context.Context) (SyncResult, error) {
 	var wg sync.WaitGroup
 	var mu sync.Mutex
@@ -85,6 +103,8 @@ func (s *JobService) SyncJobs(ctx context.Context) (SyncResult, error) {
 				jobs[i].SalaryMin = parsed.Min
 				jobs[i].SalaryMax = parsed.Max
 			}
+
+			jobs = dedupeJobs(jobs)
 
 			const batchSize = 500
 			savedCount := 0

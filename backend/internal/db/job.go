@@ -81,7 +81,7 @@ func (r *PostgresJobRepository) Save(ctx context.Context, jobs []domain.Job) err
             is_remote = EXCLUDED.is_remote,
             active = EXCLUDED.active,
             last_seen_at = EXCLUDED.last_seen_at,
-            posted_at = EXCLUDED.posted_at,
+            posted_at = EXCLUDED.posted_at
     `
 
 	_, err := r.db.Exec(ctx, query, valueArgs...)
