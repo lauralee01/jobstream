@@ -27,7 +27,7 @@ func (r *PostgresJobRepository) Save(ctx context.Context, jobs []domain.Job) err
 		return nil
 	}
 
-	const cols = 15 // number of columns in INSERT
+	const cols = 17 // number of columns in INSERT
 	valueStrings := make([]string, 0, len(jobs))
 	valueArgs := make([]interface{}, 0, len(jobs)*cols)
 
@@ -36,9 +36,9 @@ func (r *PostgresJobRepository) Save(ctx context.Context, jobs []domain.Job) err
 		base := i*cols + 1
 
 		valueStrings = append(valueStrings,
-			fmt.Sprintf("($%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d)",
+			fmt.Sprintf("($%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d)",
 				base+0, base+1, base+2, base+3, base+4, base+5, base+6,
-				base+7, base+8, base+9, base+10, base+11, base+12, base+13, base+14,
+				base+7, base+8, base+9, base+10, base+11, base+12, base+13, base+14, base+15, base+16,
 			),
 		)
 
@@ -56,6 +56,8 @@ func (r *PostgresJobRepository) Save(ctx context.Context, jobs []domain.Job) err
 			job.SalaryMin,
 			job.SalaryMax,
 			job.IsRemote,
+			job.Active,
+			job.LastSeenAt,
 			job.PostedAt,
 			job.CreatedAt,
 		)
@@ -64,9 +66,22 @@ func (r *PostgresJobRepository) Save(ctx context.Context, jobs []domain.Job) err
 	query := `
         INSERT INTO jobs (
             id, source_id, platform, title, company, location, category,
-            description, url, salary, salary_min, salary_max, is_remote, posted_at, created_at
+            description, url, salary, salary_min, salary_max, is_remote, active, last_seen_at, posted_at, created_at
         ) VALUES ` + strings.Join(valueStrings, ",") + `
-        ON CONFLICT (source_id, platform) DO NOTHING
+        ON CONFLICT (source_id, platform) DO UPDATE SET
+            title = EXCLUDED.title,
+            company = EXCLUDED.company,
+            location = EXCLUDED.location,
+            category = EXCLUDED.category,
+            description = EXCLUDED.description,
+            url = EXCLUDED.url,
+            salary = EXCLUDED.salary,
+            salary_min = EXCLUDED.salary_min,
+            salary_max = EXCLUDED.salary_max,
+            is_remote = EXCLUDED.is_remote,
+            active = EXCLUDED.active,
+            last_seen_at = EXCLUDED.last_seen_at,
+            posted_at = EXCLUDED.posted_at,
     `
 
 	_, err := r.db.Exec(ctx, query, valueArgs...)
@@ -94,6 +109,8 @@ func (r *PostgresJobRepository) FindAll(
 			salary_min,
 			salary_max,
 			is_remote,
+			active,
+			last_seen_at,
 			posted_at,
 			created_at
 		FROM jobs
@@ -101,7 +118,7 @@ func (r *PostgresJobRepository) FindAll(
 
 	countQuery := `SELECT COUNT(*) FROM jobs`
 
-	conditions := []string{}
+	conditions := []string{"active = true"}
 	args := []interface{}{}
 	paramIdx := 1
 
@@ -337,6 +354,8 @@ func (r *PostgresJobRepository) FindAll(
 			&job.SalaryMin,
 			&job.SalaryMax,
 			&job.IsRemote,
+			&job.Active,
+			&job.LastSeenAt,
 			&job.PostedAt,
 			&job.CreatedAt,
 		)
@@ -411,4 +430,22 @@ func (r *PostgresJobRepository) GetPlatforms(ctx context.Context) ([]string, err
 	}
 
 	return platforms, nil
+}
+
+func (r *PostgresJobRepository) MarkStaleInactive(ctx context.Context) error {
+	_, err := r.db.Exec(ctx, `
+		UPDATE jobs
+		SET active = false
+		WHERE last_seen_at < NOW() - INTERVAL '30 days'
+	`)
+	return err
+}
+
+func (r *PostgresJobRepository) DeleteOldInactive(ctx context.Context) error {
+	_, err := r.db.Exec(ctx, `
+		DELETE FROM jobs
+		WHERE active = false
+		AND last_seen_at < NOW() - INTERVAL '180 days'
+	`)
+	return err
 }

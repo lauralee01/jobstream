@@ -15,6 +15,8 @@ type Job struct {
 	Company     string    `json:"company"`
 	Location    string    `json:"location"`
 	IsRemote    bool      `json:"is_remote"`
+	Active      bool      `json:"active"`
+	LastSeenAt  time.Time `json:"last_seen_at"`
 	Category    string    `json:"category"`
 	Description string    `json:"description"`
 	URL         string    `json:"url"`
@@ -55,6 +57,8 @@ type JobRepository interface {
 	FindAll(ctx context.Context, filter JobFilter) ([]Job, int64, error)
 	GetCategories(ctx context.Context) ([]string, error)
 	GetPlatforms(ctx context.Context) ([]string, error)
+	MarkStaleInactive(ctx context.Context) error
+	DeleteOldInactive(ctx context.Context) error
 }
 
 type JobsResponse struct {

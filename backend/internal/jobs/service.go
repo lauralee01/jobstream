@@ -11,6 +11,7 @@ import (
 	"log"
 	"sort"
 	"sync"
+	"time"
 )
 
 type JobService struct {
@@ -78,6 +79,8 @@ func (s *JobService) SyncJobs(ctx context.Context) (SyncResult, error) {
 				jobs[i].Platform = fetcher.Name()
 				jobs[i].Category = category.Normalize(jobs[i].Category, jobs[i].Title)
 				jobs[i].IsRemote = remote.Detect(jobs[i])
+				jobs[i].Active = true
+				jobs[i].LastSeenAt = time.Now()
 				parsed := salary.Parse(jobs[i].Salary)
 				jobs[i].SalaryMin = parsed.Min
 				jobs[i].SalaryMax = parsed.Max
@@ -128,6 +131,14 @@ func (s *JobService) SyncJobs(ctx context.Context) (SyncResult, error) {
 
 	if result.Saved == 0 && len(result.FailedSources) > 0 {
 		return result, fmt.Errorf("all sync attempts failed")
+	}
+
+	if err := s.repo.MarkStaleInactive(ctx); err != nil {
+		log.Printf("failed to mark stale jobs inactive: %v", err)
+	}
+
+	if err := s.repo.DeleteOldInactive(ctx); err != nil {
+		log.Printf("failed to delete old inactive jobs: %v", err)
 	}
 
 	return result, nil
