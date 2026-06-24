@@ -81,6 +81,9 @@ func (j *WorkableJob) toDomain(company string) domain.Job {
 	}
 
 	location := formatLocation(j.Location)
+	if location == "Not specified" && strings.TrimSpace(j.Department) != "" {
+		location = strings.TrimSpace(j.Department)
+	}
 
 	rawCategory := j.Department
 	jobCategory := category.Normalize(rawCategory, title)
