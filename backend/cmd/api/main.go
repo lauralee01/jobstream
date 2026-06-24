@@ -88,7 +88,6 @@ func main() {
 	}
 
 	for _, company := range greenhouseCompanies {
-
 		fetchers = append(
 			fetchers,
 			greenhouse.NewClient(company.Slug),
@@ -96,7 +95,6 @@ func main() {
 	}
 
 	for _, company := range leverCompanies {
-
 		fetchers = append(
 			fetchers,
 			lever.NewClient(company.Slug),

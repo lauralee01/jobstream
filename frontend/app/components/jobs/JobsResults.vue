@@ -1,4 +1,5 @@
 <script setup>
+
 defineProps({
   jobs: {
     type: Array,
@@ -16,7 +17,21 @@ defineProps({
   error: [Object, Error, null]
 })
 
-defineEmits(['retry', 'prev-page', 'next-page'])
+const emit = defineEmits(['retry', 'prev-page', 'next-page'])
+
+const scrollToTop = () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+const handlePrevPage = () => {
+  emit('prev-page')
+  scrollToTop()
+}
+
+const handleNextPage = () => {
+  emit('next-page')
+  scrollToTop()
+}
 </script>
 
 <template>
@@ -49,7 +64,7 @@ defineEmits(['retry', 'prev-page', 'next-page'])
           type="button"
           :disabled="page <= 1"
           class="p-2 rounded-lg border border-gray-300 dark:border-gray-700 disabled:opacity-30 disabled:cursor-not-allowed bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
-          @click="$emit('prev-page')"
+          @click="handlePrevPage"
         >
           <span class="sr-only">Previous page</span>
           ‹
@@ -61,7 +76,7 @@ defineEmits(['retry', 'prev-page', 'next-page'])
           type="button"
           :disabled="page >= metadata.total_pages"
           class="p-2 rounded-lg border border-gray-300 dark:border-gray-700 disabled:opacity-30 disabled:cursor-not-allowed bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
-          @click="$emit('next-page')"
+          @click="handleNextPage"
         >
           <span class="sr-only">Next page</span>
           ›
