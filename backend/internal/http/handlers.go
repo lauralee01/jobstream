@@ -95,7 +95,7 @@ func (h *JobHandler) GetJobs(w http.ResponseWriter, r *http.Request) {
 
 	filter := parseJobFilter(r)
 
-	jobs, total, err := h.service.GetJobs(r.Context(), filter)
+	jobs, total, err := h.service.GetJobs(ctx, filter)
 	if err != nil {
 		// Check if error was due to timeout
 		if ctx.Err() == context.DeadlineExceeded {
