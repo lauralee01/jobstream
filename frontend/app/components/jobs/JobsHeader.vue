@@ -36,7 +36,7 @@ defineEmits(['sync'])
         <ClientOnly>
           <ColorModeToggle />
         </ClientOnly>
-        <!-- <button
+        <button
           type="button"
           :disabled="isSyncing"
           class="inline-flex items-center gap-2 whitespace-nowrap text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors disabled:opacity-60"
@@ -58,7 +58,7 @@ defineEmits(['sync'])
             />
           </svg>
           <span>{{ isSyncing ? 'Syncing...' : 'Sync Jobs' }}</span>
-        </button> -->
+        </button>
       </div>
     </div>
   </header>
