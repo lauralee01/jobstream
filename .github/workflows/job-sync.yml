@@ -1,0 +1,32 @@
+name: Scheduled Job Sync Cron
+
+on:
+  schedule:
+    # Runs every 6 hours (at minute 0 of hours 0, 6, 12, 18 UTC)
+    - cron: '0 */6 * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub UI anytime
+
+jobs:
+  sync-jobs:
+    name: Trigger JobStream Backend Ingestion Pipeline
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send POST Request to Job Sync API Endpoint
+        env:
+          RENDER_BACKEND_URL: ${{ secrets.RENDER_BACKEND_URL }}
+        run: |
+          if [ -z "${RENDER_BACKEND_URL}" ]; then
+            echo "❌ Error: RENDER_BACKEND_URL secret is not set in GitHub repository secrets!"
+            exit 1
+          fi
+          TARGET_URL="${RENDER_BACKEND_URL}/api/v1/jobs/sync"
+          echo "Triggering job sync endpoint at ${TARGET_URL}..."
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "${TARGET_URL}")
+          echo "HTTP Status Code: ${RESPONSE}"
+          if [ "${RESPONSE}" -ge 200 ] && [ "${RESPONSE}" -lt 300 ]; then
+            echo "✅ Job sync triggered successfully!"
+          else
+            echo "❌ Job sync failed with status ${RESPONSE}"
+            exit 1
+          fi
