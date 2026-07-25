@@ -56,6 +56,5 @@ func Detect(job domain.Job) bool {
 		return false
 	}
 
-	// 5. Fallback to scanning all text
 	return positiveRemoteRegex.MatchString(text)
 }

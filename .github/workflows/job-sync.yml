@@ -6,6 +6,7 @@ on:
     - cron: '0 */6 * * *'
   workflow_dispatch: # Allows manual trigger from GitHub UI anytime
 
+  
 jobs:
   sync-jobs:
     name: Trigger JobStream Backend Ingestion Pipeline
