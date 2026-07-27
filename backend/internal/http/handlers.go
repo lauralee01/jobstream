@@ -9,12 +9,14 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"sync/atomic"
 	"time"
 )
 
 type JobHandler struct {
 	service       *jobs.JobService
 	metadataCache *cache.MetadataCache
+	syncing       atomic.Bool
 }
 
 func NewJobHandler(service *jobs.JobService) *JobHandler {
@@ -30,27 +32,53 @@ func (h *JobHandler) SyncJobs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := h.service.SyncJobs(r.Context())
-	if err != nil {
-		log.Printf("SyncJobs failed: %v", err)
-
+	if !h.syncing.CompareAndSwap(false, true) {
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(http.StatusConflict)
 
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"message": "Failed to sync jobs",
-			"result":  result,
+		_ = json.NewEncoder(w).Encode(map[string]string{
+			"message": "A job sync is already running",
 		})
+
 		return
 	}
 
-	h.metadataCache.Invalidate()
+	go func() {
+		defer h.syncing.Store(false)
+
+		ctx, cancel := context.WithTimeout(
+			context.Background(),
+			15*time.Minute,
+		)
+		defer cancel()
+
+		log.Println("[job-sync] manual sync started")
+
+		result, err := h.service.SyncJobs(ctx)
+		if err != nil {
+			log.Printf(
+				"[job-sync] manual sync failed: %v result=%+v",
+				err,
+				result,
+			)
+			return
+		}
+
+		h.metadataCache.Invalidate()
+
+		log.Printf(
+			"[job-sync] manual sync completed fetched=%d saved=%d failedSources=%d",
+			result.Fetched,
+			result.Saved,
+			len(result.FailedSources),
+		)
+	}()
 
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
 
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"message": "Jobs synced successfully",
-		"result":  result,
+	_ = json.NewEncoder(w).Encode(map[string]string{
+		"message": "Job sync started",
 	})
 }
 
