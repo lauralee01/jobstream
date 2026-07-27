@@ -59,109 +59,240 @@ func dedupeJobs(jobs []domain.Job) []domain.Job {
 }
 
 func (s *JobService) SyncJobs(ctx context.Context) (SyncResult, error) {
-	var wg sync.WaitGroup
-	var mu sync.Mutex
+	const (
+		saveBatchSize          = 500
+		maxConcurrentProviders = 4
+	)
 
-	result := SyncResult{
+	syncStartedAt := time.Now()
+
+	var providerWaitGroup sync.WaitGroup
+	var resultMutex sync.Mutex
+
+	providerSemaphore := make(
+		chan struct{},
+		maxConcurrentProviders,
+	)
+
+	syncResult := SyncResult{
 		FailedSources: []string{},
 		Providers:     []ProviderResult{},
 	}
 
-	for _, f := range s.fetchers {
-		fetcher := f
+	for _, configuredFetcher := range s.fetchers {
+		currentFetcher := configuredFetcher
 
-		wg.Add(1)
+		providerWaitGroup.Add(1)
+
 		go func() {
-			defer wg.Done()
+			defer providerWaitGroup.Done()
 
-			providerResult := ProviderResult{
-				Provider: fetcher.Name(),
+			if err := ctx.Err(); err != nil {
+				log.Printf(
+					"%s: sync skipped because context ended: %v",
+					currentFetcher.Name(),
+					err,
+				)
+				return
 			}
 
-			jobs, err := fetcher.Fetch(ctx)
+			providerSemaphore <- struct{}{}
+			defer func() {
+				<-providerSemaphore
+			}()
+
+			providerSyncResult := ProviderResult{
+				Provider: currentFetcher.Name(),
+			}
+
+			log.Printf(
+				"[job-sync] provider started provider=%s",
+				currentFetcher.Name(),
+			)
+
+			fetchedJobs, err := currentFetcher.Fetch(ctx)
 			if err != nil {
-				msg := fmt.Sprintf("%s: fetch failed: %v", fetcher.Name(), err)
-				log.Println(msg)
+				failureMessage := fmt.Sprintf(
+					"%s: fetch failed: %v",
+					currentFetcher.Name(),
+					err,
+				)
 
-				providerResult.Error = msg
+				log.Println(failureMessage)
 
-				mu.Lock()
-				result.FailedSources = append(result.FailedSources, msg)
-				result.Providers = append(result.Providers, providerResult)
-				mu.Unlock()
+				providerSyncResult.Error = failureMessage
+
+				resultMutex.Lock()
+				syncResult.FailedSources = append(
+					syncResult.FailedSources,
+					failureMessage,
+				)
+				syncResult.Providers = append(
+					syncResult.Providers,
+					providerSyncResult,
+				)
+				resultMutex.Unlock()
 
 				return
 			}
 
-			for i := range jobs {
-				jobs[i].Platform = fetcher.Name()
-				jobs[i].Category = category.Normalize(jobs[i].Category, jobs[i].Title)
-				jobs[i].IsRemote = remote.Detect(jobs[i])
-				jobs[i].Active = true
-				jobs[i].LastSeenAt = time.Now()
-				parsed := salary.Parse(jobs[i].Salary)
-				jobs[i].SalaryMin = parsed.Min
-				jobs[i].SalaryMax = parsed.Max
+			if err := ctx.Err(); err != nil {
+				log.Printf(
+					"%s: sync cancelled after fetch: %v",
+					currentFetcher.Name(),
+					err,
+				)
+				return
 			}
 
-			jobs = dedupeJobs(jobs)
+			for jobIndex := range fetchedJobs {
+				currentJob := &fetchedJobs[jobIndex]
 
-			const batchSize = 500
-			savedCount := 0
+				currentJob.Platform = currentFetcher.Name()
+				currentJob.Category = category.Normalize(
+					currentJob.Category,
+					currentJob.Title,
+				)
+				currentJob.IsRemote = remote.Detect(*currentJob)
+				currentJob.Active = true
+				currentJob.LastSeenAt = syncStartedAt
 
-			for start := 0; start < len(jobs); start += batchSize {
-				end := start + batchSize
-				if end > len(jobs) {
-					end = len(jobs)
-				}
+				parsedSalary := salary.Parse(currentJob.Salary)
+				currentJob.SalaryMin = parsedSalary.Min
+				currentJob.SalaryMax = parsedSalary.Max
+			}
 
-				batch := jobs[start:end]
+			deduplicatedJobs := dedupeJobs(fetchedJobs)
+			numberOfSavedJobs := 0
 
-				if err := s.repo.Save(ctx, batch); err != nil {
-					msg := fmt.Sprintf("%s: save failed: %v", fetcher.Name(), err)
-					log.Println(msg)
+			for batchStartIndex := 0; batchStartIndex < len(deduplicatedJobs); batchStartIndex += saveBatchSize {
 
-					providerResult.Fetched = len(jobs)
-					providerResult.Saved = savedCount
-					providerResult.Error = msg
+				if err := ctx.Err(); err != nil {
+					failureMessage := fmt.Sprintf(
+						"%s: save cancelled: %v",
+						currentFetcher.Name(),
+						err,
+					)
 
-					mu.Lock()
-					result.FailedSources = append(result.FailedSources, msg)
-					result.Providers = append(result.Providers, providerResult)
-					mu.Unlock()
+					log.Println(failureMessage)
+
+					providerSyncResult.Fetched =
+						len(deduplicatedJobs)
+					providerSyncResult.Saved =
+						numberOfSavedJobs
+					providerSyncResult.Error =
+						failureMessage
+
+					resultMutex.Lock()
+					syncResult.FailedSources = append(
+						syncResult.FailedSources,
+						failureMessage,
+					)
+					syncResult.Providers = append(
+						syncResult.Providers,
+						providerSyncResult,
+					)
+					resultMutex.Unlock()
 
 					return
 				}
 
-				savedCount += len(batch)
+				batchEndIndex :=
+					batchStartIndex + saveBatchSize
+
+				if batchEndIndex > len(deduplicatedJobs) {
+					batchEndIndex = len(deduplicatedJobs)
+				}
+
+				jobBatch := deduplicatedJobs[batchStartIndex:batchEndIndex]
+
+				if err := s.repo.Save(ctx, jobBatch); err != nil {
+					failureMessage := fmt.Sprintf(
+						"%s: save failed: %v",
+						currentFetcher.Name(),
+						err,
+					)
+
+					log.Println(failureMessage)
+
+					providerSyncResult.Fetched =
+						len(deduplicatedJobs)
+					providerSyncResult.Saved =
+						numberOfSavedJobs
+					providerSyncResult.Error =
+						failureMessage
+
+					resultMutex.Lock()
+					syncResult.FailedSources = append(
+						syncResult.FailedSources,
+						failureMessage,
+					)
+					syncResult.Providers = append(
+						syncResult.Providers,
+						providerSyncResult,
+					)
+					resultMutex.Unlock()
+
+					return
+				}
+
+				numberOfSavedJobs += len(jobBatch)
 			}
 
-			providerResult.Fetched = len(jobs)
-			providerResult.Saved = savedCount
+			providerSyncResult.Fetched =
+				len(deduplicatedJobs)
+			providerSyncResult.Saved =
+				numberOfSavedJobs
 
-			mu.Lock()
-			result.Fetched += len(jobs)
-			result.Saved += savedCount
-			result.Providers = append(result.Providers, providerResult)
-			mu.Unlock()
+			resultMutex.Lock()
+			syncResult.Fetched += len(deduplicatedJobs)
+			syncResult.Saved += numberOfSavedJobs
+			syncResult.Providers = append(
+				syncResult.Providers,
+				providerSyncResult,
+			)
+			resultMutex.Unlock()
+
+			log.Printf(
+				"[job-sync] provider completed provider=%s fetched=%d saved=%d",
+				currentFetcher.Name(),
+				len(deduplicatedJobs),
+				numberOfSavedJobs,
+			)
 		}()
 	}
 
-	wg.Wait()
+	providerWaitGroup.Wait()
 
-	if result.Saved == 0 && len(result.FailedSources) > 0 {
-		return result, fmt.Errorf("all sync attempts failed")
+	if syncResult.Saved == 0 &&
+		len(syncResult.FailedSources) > 0 {
+		return syncResult, fmt.Errorf(
+			"all sync attempts failed",
+		)
+	}
+
+	if err := ctx.Err(); err != nil {
+		return syncResult, fmt.Errorf(
+			"sync context ended before cleanup: %w",
+			err,
+		)
 	}
 
 	if err := s.repo.MarkStaleInactive(ctx); err != nil {
-		log.Printf("failed to mark stale jobs inactive: %v", err)
+		log.Printf(
+			"failed to mark stale jobs inactive: %v",
+			err,
+		)
 	}
 
 	if err := s.repo.DeleteOldInactive(ctx); err != nil {
-		log.Printf("failed to delete old inactive jobs: %v", err)
+		log.Printf(
+			"failed to delete old inactive jobs: %v",
+			err,
+		)
 	}
 
-	return result, nil
+	return syncResult, nil
 }
 
 func (s *JobService) GetJobs(ctx context.Context, filter domain.JobFilter) ([]domain.Job, int64, error) {
