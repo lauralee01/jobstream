@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"jobstream/internal/db"
@@ -35,8 +38,17 @@ func main() {
 		log.Fatal("DATABASE_URL is not set")
 	}
 
-	// 2. Create Postgres connection pool
-	pool, err := pgxpool.New(context.Background(), databaseURL)
+	// 2. Parse and configure Postgres connection pool
+	poolConfig, err := pgxpool.ParseConfig(databaseURL)
+	if err != nil {
+		log.Fatalf("Unable to parse database URL: %v", err)
+	}
+	poolConfig.MaxConns = 25
+	poolConfig.MinConns = 5
+	poolConfig.MaxConnIdleTime = 30 * time.Minute
+	poolConfig.MaxConnLifetime = 1 * time.Hour
+
+	pool, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
 	if err != nil {
 		log.Fatalf("Unable to connect to database: %v", err)
 	}
@@ -122,8 +134,8 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	scheduler := scheduler.NewScheduler(jobService, 6*time.Hour)
-	scheduler.Start(ctx)
+	sched := scheduler.NewScheduler(jobService, 6*time.Hour)
+	sched.Start(ctx)
 
 	// 6. Initialize HTTP Router with job service
 	router := apphttp.NewRouter(jobService)
@@ -136,6 +148,25 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 	}
 
-	log.Println("🚀 Server running on http://localhost:8080")
-	log.Fatal(server.ListenAndServe())
+	go func() {
+		log.Println("🚀 Server running on http://localhost:8080")
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("Server failed: %v", err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+	<-quit
+
+	log.Println("Shutting down server gracefully...")
+
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer shutdownCancel()
+
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		log.Printf("Server forced to shutdown: %v", err)
+	}
+
+	log.Println("Server exiting cleanly")
 }

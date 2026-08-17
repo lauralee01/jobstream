@@ -93,6 +93,7 @@ func (h *JobHandler) GetCategories(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "public, max-age=600, s-maxage=600")
 	if err := json.NewEncoder(w).Encode(categories); err != nil {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 	}
@@ -110,6 +111,7 @@ func (h *JobHandler) GetPlatforms(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "public, max-age=600, s-maxage=600")
 	if err := json.NewEncoder(w).Encode(platforms); err != nil {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 	}
@@ -117,8 +119,8 @@ func (h *JobHandler) GetPlatforms(w http.ResponseWriter, r *http.Request) {
 
 // GetJobs fetches all jobs and returns them as JSON.
 func (h *JobHandler) GetJobs(w http.ResponseWriter, r *http.Request) {
-	// Add 15-second timeout to prevent slow queries from blocking indefinitely
-	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
+	// Add 8-second timeout to complete within server WriteTimeout (10s)
+	ctx, cancel := context.WithTimeout(r.Context(), 8*time.Second)
 	defer cancel()
 
 	filter := parseJobFilter(r)

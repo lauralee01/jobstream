@@ -127,25 +127,15 @@ func (r *PostgresJobRepository) FindAll(
 	// =========================
 
 	if filter.Keyword != "" {
-
 		conditions = append(
 			conditions,
-			fmt.Sprintf(`
-				(
-					title ILIKE $%d OR
-					company ILIKE $%d OR
-					location ILIKE $%d OR
-					category ILIKE $%d
-				)
-			`,
-				paramIdx,
-				paramIdx,
-				paramIdx,
+			fmt.Sprintf(
+				`to_tsvector('english', coalesce(title, '') || ' ' || coalesce(company, '') || ' ' || coalesce(location, '') || ' ' || coalesce(category, '')) @@ websearch_to_tsquery('english', $%d)`,
 				paramIdx,
 			),
 		)
 
-		args = append(args, "%"+filter.Keyword+"%")
+		args = append(args, filter.Keyword)
 		paramIdx++
 	}
 
@@ -436,7 +426,8 @@ func (r *PostgresJobRepository) MarkStaleInactive(ctx context.Context) error {
 	_, err := r.db.Exec(ctx, `
 		UPDATE jobs
 		SET active = false
-		WHERE last_seen_at < NOW() - INTERVAL '30 days'
+		WHERE active = true
+		AND last_seen_at < NOW() - INTERVAL '30 days'
 	`)
 	return err
 }
