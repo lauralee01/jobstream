@@ -1,21 +1,23 @@
 <script setup>
-const props = defineProps({
-  modelValue: { type: Object, required: true }
-})
-const draft = defineModel({ type: Object, required: true })
+import { useDebounceFn } from '@vueuse/core'
 
-const emit = defineEmits(['update:modelValue', 'search'])
+const draft = defineModel({ type: Object, required: true })
+const emit = defineEmits(['search'])
+
+const debouncedSearch = useDebounceFn(() => {
+  emit('search')
+}, 300)
 
 // Track previous values to detect when clearing happens
-const prevKeyword = ref(props.modelValue.keyword)
-const prevLocation = ref(props.modelValue.location)
+const prevKeyword = ref(draft.value?.keyword || '')
+const prevLocation = ref(draft.value?.location || '')
 
 // When keyword is cleared
 watch(
-  () => props.modelValue.keyword,
+  () => draft.value?.keyword,
   (newValue) => {
     if (!newValue?.trim() && prevKeyword.value?.trim()) {
-      emit('search')
+      debouncedSearch()
     }
     prevKeyword.value = newValue
   }
@@ -23,10 +25,10 @@ watch(
 
 // When location is cleared
 watch(
-  () => props.modelValue.location,
+  () => draft.value?.location,
   (newValue) => {
     if (!newValue?.trim() && prevLocation.value?.trim()) {
-      emit('search')
+      debouncedSearch()
     }
     prevLocation.value = newValue
   }

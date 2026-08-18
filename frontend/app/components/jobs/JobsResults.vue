@@ -35,7 +35,8 @@ const handleNextPage = () => {
 </script>
 
 <template>
-  <JobsJobListSkeleton v-if="pending" />
+  <!-- Full skeleton loader for initial load when no data exists yet -->
+  <JobsJobListSkeleton v-if="pending && (!jobs || jobs.length === 0)" />
 
   <div
     v-else-if="error"
@@ -52,8 +53,18 @@ const handleNextPage = () => {
     </button>
   </div>
 
-  <div v-else class="space-y-6">
-    <div v-if="jobs.length > 0" class="flex flex-col gap-6">
+  <div v-else class="space-y-6 relative">
+    <!-- Subtle top loading indicator bar during background refetches -->
+    <div
+      v-if="pending && jobs.length > 0"
+      class="absolute -top-3 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500 rounded-full animate-pulse z-10"
+    />
+
+    <div
+      v-if="jobs.length > 0"
+      class="flex flex-col gap-6 transition-opacity duration-200"
+      :class="{ 'opacity-60 pointer-events-none': pending }"
+    >
       <JobCard v-for="job in jobs" :key="job.id" :job="job" />
 
       <div
@@ -89,9 +100,16 @@ const handleNextPage = () => {
       class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-12 text-center shadow-sm"
     >
       <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">No jobs found</h3>
-      <p class="text-gray-600 dark:text-gray-400">
+      <p class="text-gray-600 dark:text-gray-400 mb-6">
         Try adjusting your filters or search terms to find what you're looking for.
       </p>
+      <button
+        type="button"
+        class="inline-flex items-center gap-2 bg-gray-900 dark:bg-gray-700 text-white font-semibold px-5 py-2.5 rounded-lg hover:bg-blue-700 transition-colors"
+        @click="$emit('retry')"
+      >
+        Reset Search / Retry
+      </button>
     </div>
   </div>
 </template>

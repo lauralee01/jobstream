@@ -1,5 +1,3 @@
--- 012_optimize_search_and_filter_indexes.sql
--- Composite partial index for the primary active job listing feed
 CREATE INDEX IF NOT EXISTS idx_jobs_active_posted ON jobs (posted_at DESC) WHERE active = true;
 
 -- Drop previous unweighted/category FTS index if exists

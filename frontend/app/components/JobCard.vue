@@ -1,14 +1,4 @@
-<script setup>
-import { computed } from 'vue'
-import { formatRelativeDate } from '~/utils/formatRelativeDate'
-
-const props = defineProps({
-  job: {
-    type: Object,
-    required: true
-  }
-})
-
+<script>
 // Base styles for each color theme
 const themeColors = {
   purple: {
@@ -74,6 +64,18 @@ const platformColorMap = {
 }
 
 const colorKeys = Object.keys(themeColors)
+</script>
+
+<script setup>
+import { computed } from 'vue'
+import { formatRelativeDate } from '~/utils/formatRelativeDate'
+
+const props = defineProps({
+  job: {
+    type: Object,
+    required: true
+  }
+})
 
 // Dynamically compute the theme to use based on the platform name
 const theme = computed(() => {
