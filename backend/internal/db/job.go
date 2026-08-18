@@ -126,16 +126,18 @@ func (r *PostgresJobRepository) FindAll(
 	// Keyword Search
 	// =========================
 
+	var ftsParamIdx int
 	if filter.Keyword != "" {
 		conditions = append(
 			conditions,
 			fmt.Sprintf(
-				`to_tsvector('english', coalesce(title, '') || ' ' || coalesce(company, '') || ' ' || coalesce(location, '') || ' ' || coalesce(category, '')) @@ websearch_to_tsquery('english', $%d)`,
+				`(setweight(to_tsvector('english', coalesce(title, '')), 'A') || setweight(to_tsvector('english', coalesce(company, '') || ' ' || coalesce(location, '')), 'B')) @@ websearch_to_tsquery('english', $%d)`,
 				paramIdx,
 			),
 		)
 
 		args = append(args, filter.Keyword)
+		ftsParamIdx = paramIdx
 		paramIdx++
 	}
 
@@ -264,11 +266,20 @@ func (r *PostgresJobRepository) FindAll(
 		sortOrder = "ASC"
 	}
 
-	query += fmt.Sprintf(
-		" ORDER BY %s %s",
-		sortBy,
-		sortOrder,
-	)
+	if ftsParamIdx > 0 && (filter.SortBy == "" || filter.SortBy == "posted_at") {
+		query += fmt.Sprintf(
+			" ORDER BY ts_rank(setweight(to_tsvector('english', coalesce(title, '')), 'A') || setweight(to_tsvector('english', coalesce(company, '') || ' ' || coalesce(location, '')), 'B'), websearch_to_tsquery('english', $%d)) DESC, %s %s",
+			ftsParamIdx,
+			sortBy,
+			sortOrder,
+		)
+	} else {
+		query += fmt.Sprintf(
+			" ORDER BY %s %s",
+			sortBy,
+			sortOrder,
+		)
+	}
 
 	// =========================
 	// Pagination
