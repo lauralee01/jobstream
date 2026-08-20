@@ -159,8 +159,6 @@ func (r *PostgresJobRepository) FindAll(
 	// =========================
 	// Min Salary Filter (OPTIMIZED)
 	// =========================
-	// Now uses simple numeric comparison on pre-parsed salary_min column
-	// instead of expensive regex parsing on every row
 
 	if filter.MinSalary != nil {
 
