@@ -294,7 +294,6 @@ func (r *PostgresJobRepository) FindAll(
 	offset := (filter.Page - 1) * filter.Limit
 
 	// FIX: Save the args count BEFORE adding pagination params
-	// This ensures the count query gets the right parameter values
 	countArgs := make([]interface{}, len(args))
 	copy(countArgs, args)
 
