@@ -11,7 +11,7 @@ type Job struct {
 	ID          string    `json:"id"`
 	SourceID    string    `json:"source_id"` // ID from the external source (e.g. LinkedIn ID)
 	Platform    string    `json:"platform"`  // e.g. "linkedin", "indeed"
-	Title       string    `json:"title"`
+	Title       string    `json:"title"`     // Title for the job listing
 	Company     string    `json:"company"`
 	Location    string    `json:"location"`
 	IsRemote    bool      `json:"is_remote"`
