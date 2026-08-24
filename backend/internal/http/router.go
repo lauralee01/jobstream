@@ -19,7 +19,7 @@ func NewRouter(jobService *jobs.JobService) http.Handler {
 
 	// Job routes
 	jobHandler := NewJobHandler(jobService)
-	// Make sure to handle preflight OPTIONS requests for CORS
+
 	mux.HandleFunc("POST /api/v1/jobs/sync", jobHandler.SyncJobs)
 	mux.HandleFunc("GET /api/v1/jobs", jobHandler.GetJobs)
 	mux.HandleFunc("GET /api/v1/jobs/categories", jobHandler.GetCategories)
@@ -34,7 +34,6 @@ func corsMiddleware(next http.Handler) http.Handler {
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
-		// Handle preflight requests
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
 			return
