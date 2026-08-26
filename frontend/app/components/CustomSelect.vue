@@ -67,7 +67,6 @@ const toggleDropdown = () => {
       {{ label }}
     </label>
 
-    <!-- Main Button -->
     <button
       @click="toggleDropdown"
       class="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-lg p-3 flex items-center justify-between transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
