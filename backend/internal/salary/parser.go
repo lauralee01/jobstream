@@ -13,7 +13,6 @@ type ParsedSalary struct {
 }
 
 // Parse extracts salary values from a salary string like "120k - 150k" or "$80,000"
-// Returns min and max as int64 pointers (nil if not found)
 func Parse(salaryStr string) ParsedSalary {
 	if salaryStr == "" {
 		return ParsedSalary{}
