@@ -63,7 +63,6 @@ const toggleDropdown = () => {
 
 <template>
   <div class="relative w-full" ref="dropdownRef">
-    <!-- Label -->
     <label v-if="label" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
       {{ label }}
     </label>
