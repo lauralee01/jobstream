@@ -23,7 +23,6 @@ func Parse(salaryStr string) ParsedSalary {
 	cleaned := strings.ToLower(salaryStr)
 	cleaned = strings.TrimSpace(cleaned)
 
-	// Regex to find numbers followed by optional multipliers (k, m)
 	// Matches patterns like: "120k", "80,000", "150.5k", "1.2m"
 	re := regexp.MustCompile(`(\d+(?:[.,]\d+)*)\s*([km])?`)
 	matches := re.FindAllStringSubmatch(cleaned, -1)
