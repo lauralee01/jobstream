@@ -24,7 +24,6 @@ export const useJobs = () => {
     }
   }
 
-  /** Imperative POST — use $fetch, not useFetch. */
   const syncJobs = () =>
     $fetch(`${API_BASE}/jobs/sync`, { method: 'POST' })
 
