@@ -8,7 +8,6 @@
 </template>
 
 <style>
-/* Global styles */
 body {
   @apply font-sans antialiased;
 }
