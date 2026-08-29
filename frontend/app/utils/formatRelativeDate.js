@@ -1,4 +1,4 @@
-/** Human-readable relative time (e.g. "2 days ago"). */
+/** Human-readable relative time (e.g. "2 days ago") */
 export const formatRelativeDate = (dateString) => {
   if (!dateString) return ''
 
