@@ -6,7 +6,7 @@ import {
 } from '~/utils/filterParams'
 
 /**
- * URL is the source of truth for applied filters.
+ * URL is the source of truth for applied filters
  * `draft` is bound to form controls; `applyFilters` commits draft → URL.
  */
 export const useJobFilters = () => {
