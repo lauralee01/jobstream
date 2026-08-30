@@ -1,6 +1,6 @@
 /**
- * Fetch categories and platforms once per session (shared cache keys).
- * Call from page setup so sidebar does not block on its own fetches.
+ * Fetch categories and platforms once per session (shared cache keys)
+ * Call from page setup so sidebar does not block on its own fetches
  */
 export const useJobMetadata = () => {
   const config = useRuntimeConfig()
