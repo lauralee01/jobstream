@@ -127,7 +127,6 @@ func (h *JobHandler) GetJobs(w http.ResponseWriter, r *http.Request) {
 
 	jobs, total, err := h.service.GetJobs(ctx, filter)
 	if err != nil {
-		// Check if error was due to timeout
 		if ctx.Err() == context.DeadlineExceeded {
 			http.Error(w, "Request took too long to process. Try refining your filters.", http.StatusGatewayTimeout)
 			return
