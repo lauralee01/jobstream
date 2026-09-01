@@ -9,7 +9,6 @@ import (
 )
 
 // MetadataCache provides thread-safe caching for categories and platforms
-// with separate expiration times and duplicate-request suppression.
 type MetadataCache struct {
 	mu sync.RWMutex
 
