@@ -119,7 +119,6 @@ func (h *JobHandler) GetPlatforms(w http.ResponseWriter, r *http.Request) {
 
 // GetJobs fetches all jobs and returns them as JSON.
 func (h *JobHandler) GetJobs(w http.ResponseWriter, r *http.Request) {
-	// Add 8-second timeout to complete within server WriteTimeout (10s)
 	ctx, cancel := context.WithTimeout(r.Context(), 8*time.Second)
 	defer cancel()
 
