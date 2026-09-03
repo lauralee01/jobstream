@@ -10,31 +10,28 @@ import (
 	"time"
 )
 
-
 type Client struct {
 	httpClient *http.Client
 	baseURL    string
-	appID    string
-	appKey   string
+	appID      string
+	appKey     string
 }
 
 const (
 	platformName = "Adzuna"
 )
 
-
 func NewAPIClient() *Client {
 	return &Client{
 		httpClient: &http.Client{
 			Timeout: 10 * time.Second,
 		},
-		baseURL:    "https://api.adzuna.com/v1/api/jobs/us/search/1",
-		appID:    os.Getenv("ADZUNA_APP_ID"),
-		appKey:   os.Getenv("ADZUNA_APP_KEY"),
+		baseURL: "https://api.adzuna.com/v1/api/jobs/us/search/1",
+		appID:   os.Getenv("ADZUNA_APP_ID"),
+		appKey:  os.Getenv("ADZUNA_APP_KEY"),
 	}
 }
 
-// Name implements the fetcher.Fetcher interface.
 func (c *Client) Name() string {
 	return platformName
 }
@@ -46,7 +43,7 @@ func (c *Client) Fetch(ctx context.Context) ([]domain.Job, error) {
 		c.appID,
 		c.appKey,
 	)
-	
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
