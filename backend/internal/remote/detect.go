@@ -50,7 +50,7 @@ func Detect(job domain.Job) bool {
 		return true
 	}
 
-	// 4. Explicit onsite/hybrid location or title
+	// 4. Explicit onsite/hybrid location or title.
 	if negativeLocationTitleRegex.MatchString(location) ||
 		negativeLocationTitleRegex.MatchString(title) {
 		return false
