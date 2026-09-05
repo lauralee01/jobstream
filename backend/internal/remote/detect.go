@@ -17,12 +17,12 @@ var (
 		`(?i)\b(not\s+(?:a\s+)?remote|no\s+remote|non[-\s]?remote|remote\s+not\s+available|does\s+not\s+offer.{0,30}remote|doesn't\s+offer.{0,30}remote|not\s+offer.{0,30}remote|no\s+hybrid\s+or\s+remote|onsite\s+role|on-site\s+role|must\s+be\s+onsite|must\s+work\s+onsite|strictly\s+onsite|100%\s+in[-\s]?office)\b`,
 	)
 
-	// If these appear in location/title, it's likely not fully remote.
+	// If these appear in location/title, it's likely not fully remote
 	negativeLocationTitleRegex = regexp.MustCompile(
 		`(?i)\b(onsite|on-site|in[-\s]?office|office[-\s]?based|hybrid|partly\s+remote|partially\s+remote)\b`,
 	)
 
-	// Positive remote signals.
+	// Positive remote signals
 	positiveRemoteRegex = regexp.MustCompile(
 		`(?i)\b(remote|remotely|remote-first|fully\s+remote|100%\s+remote|work\s+from\s+home|wfh|anywhere|worldwide|distributed)\b`,
 	)
